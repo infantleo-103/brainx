@@ -1,0 +1,22 @@
+from fastapi import APIRouter
+from app.api.v1.endpoints import items, users, login, roles, courses, classes, chats, assessments, uploads, teacher_slots, parent_student, class_sessions, providers, course_badges, teacher_courses, enrollments, meetings
+
+api_router = APIRouter()
+api_router.include_router(items.router, prefix="/items", tags=["items"])
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(login.router, tags=["login"])
+api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
+api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
+api_router.include_router(classes.router, prefix="/classes", tags=["classes"])
+api_router.include_router(chats.router, prefix="/chats", tags=["chats"])
+api_router.include_router(assessments.router, prefix="/assessments", tags=["assessments"])
+api_router.include_router(uploads.router, prefix="/uploads", tags=["uploads"])
+api_router.include_router(teacher_slots.router, prefix="/teacher-slots", tags=["teacher-slots"])
+api_router.include_router(parent_student.router, prefix="/parent-student", tags=["parent-student"])
+api_router.include_router(class_sessions.router, prefix="/class-sessions", tags=["class-sessions"])
+api_router.include_router(providers.router, prefix="/providers", tags=["providers"])
+api_router.include_router(course_badges.router, prefix="/course-badges", tags=["course-badges"])
+api_router.include_router(teacher_courses.router, prefix="/teacher-courses", tags=["teacher-courses"])
+api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
+api_router.include_router(meetings.router, prefix="/meetings", tags=["meetings"])
+
