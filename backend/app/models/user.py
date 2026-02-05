@@ -13,6 +13,11 @@ class UserRole(str, enum.Enum):
     coordinator = "coordinator"
     counselor = "counselor"
 
+class UserStatus(str, enum.Enum):
+    active = "active"
+    requested = "requested"
+    disabled = "disabled"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -22,6 +27,6 @@ class User(Base):
     phone = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     role = Column(Enum(UserRole), nullable=False)
-    status = Column(Boolean, default=True)
+    status = Column(Enum(UserStatus), default=UserStatus.requested, nullable=False)
     profile_image = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())

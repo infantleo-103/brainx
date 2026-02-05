@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, searchUsers, deleteUser, signup, API_BASE_URL } from '../services/api';
+import { getUsers, searchUsers, deleteUser, updateUser, signup, API_BASE_URL } from '../services/api';
 // Assuming Sidebar or Layout component handles the sidebar. using standard layout from Dashboard or similar?
 // Usually pages are wrapped in a Layout. Let's assume passed as children or standalone page.
 // Checking Teachers.jsx context, it seems they might not use a wrapper Layout component in the page file itself, 
@@ -21,6 +21,10 @@ const Users = () => {
         role: 'student' // Default to student
     });
     const [creatingUser, setCreatingUser] = useState(false);
+
+    // User Details Modal State
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -65,6 +69,19 @@ const Users = () => {
             }
         }
     };
+
+    const handleApprove = async (id) => {
+        try {
+            await updateUser(id, { status: 'active' });
+            fetchUsers();
+        } catch (error) {
+            console.error("Failed to approve user", error);
+            alert("Failed to approve user");
+        }
+    };
+
+    const activeUsers = users.filter(u => u.status === 'active');
+    const requestedUsers = users.filter(u => u.status === 'requested');
 
     const handleAddUserSubmit = async (e) => {
         e.preventDefault();
@@ -181,15 +198,19 @@ const Users = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {users.map(user => (
+                                    {activeUsers.map(user => (
                                         <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 cursor-pointer" onClick={() => { setSelectedUser(user); setIsDetailsModalOpen(true); }}>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-sm">
-                                                        {user.full_name?.charAt(0) || user.email?.charAt(0)}
+                                                    <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-sm overflow-hidden">
+                                                        {user.profile_image ? (
+                                                            <img src={user.profile_image} alt={user.full_name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            user.full_name?.charAt(0) || user.email?.charAt(0)
+                                                        )}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 text-sm">{user.full_name}</p>
+                                                        <p className="font-bold text-gray-900 text-sm hover:text-primary transition-colors">{user.full_name}</p>
                                                         <p className="text-xs text-gray-500">{user.email}</p>
                                                     </div>
                                                 </div>
@@ -200,14 +221,12 @@ const Users = () => {
                                             <td className="px-6 py-4">
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-    ${user.status ? 'bg-green-50 text-green-700 border border-green-100'
-                                                            : 'bg-red-50 text-red-700 border border-red-100'}`}
+                                                        bg-green-50 text-green-700 border border-green-100`}
                                                 >
                                                     <span
-                                                        className={`w-1.5 h-1.5 rounded-full mr-1.5 
-      ${user.status ? 'bg-green-500' : 'bg-red-500'}`}
+                                                        className={`w-1.5 h-1.5 rounded-full mr-1.5 bg-green-500`}
                                                     ></span>
-                                                    {user.status ? 'Active' : 'Inactive'}
+                                                    Active
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -218,7 +237,7 @@ const Users = () => {
                                                     <button
                                                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                         title="Delete"
-                                                        onClick={() => handleDelete(user.id)}
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }}
                                                     >
                                                         <span className="material-symbols-outlined text-[20px]">delete</span>
                                                     </button>
@@ -226,6 +245,93 @@ const Users = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                    {activeUsers.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
+                                                No active users found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Requested User Directory */}
+                    <div className="bg-white rounded-[16px] shadow-deep-purple border border-gray-50 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">Requested Users</h3>
+                            <p className="text-sm text-gray-500 mt-1">Users awaiting approval</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider font-bold">
+                                        <th className="px-6 py-4">User</th>
+                                        <th className="px-6 py-4">Role</th>
+                                        <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {requestedUsers.map(user => (
+                                        <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-4 cursor-pointer" onClick={() => { setSelectedUser(user); setIsDetailsModalOpen(true); }}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm overflow-hidden">
+                                                        {user.profile_image ? (
+                                                            <img src={user.profile_image} alt={user.full_name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            user.full_name?.charAt(0) || user.email?.charAt(0)
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-sm hover:text-amber-600 transition-colors">{user.full_name}</p>
+                                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded capitalize">{user.role}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                        bg-amber-50 text-amber-700 border border-amber-100`}
+                                                >
+                                                    <span
+                                                        className={`w-1.5 h-1.5 rounded-full mr-1.5 bg-amber-500`}
+                                                    ></span>
+                                                    Requested
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleApprove(user.id); }}
+                                                        className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg shadow-sm shadow-green-200 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">check</span>
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete/Reject"
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }}
+                                                    >
+                                                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {requestedUsers.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
+                                                No requested users found.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -323,6 +429,103 @@ const Users = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* User Details Modal */}
+            {isDetailsModalOpen && selectedUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-white/20">
+                        <div className="relative h-32 bg-gradient-to-r from-primary to-indigo-600">
+                            <button
+                                onClick={() => setIsDetailsModalOpen(false)}
+                                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                            <div className="absolute -bottom-12 left-8 p-1 bg-white rounded-full shadow-lg">
+                                <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white">
+                                    {selectedUser.profile_image ? (
+                                        <img src={selectedUser.profile_image} alt={selectedUser.full_name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-3xl font-bold text-primary">
+                                            {selectedUser.full_name?.charAt(0) || selectedUser.email?.charAt(0)}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="pt-16 pb-8 px-8">
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.full_name}</h2>
+                                    <p className="text-gray-500 font-medium">{selectedUser.email}</p>
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide 
+                                    ${selectedUser.status === 'active' ? 'bg-green-100 text-green-700' :
+                                        selectedUser.status === 'requested' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-red-100 text-red-700'}`}>
+                                    {selectedUser.status}
+                                </span>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Role</p>
+                                        <p className="font-semibold text-slate-700 capitalize flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg opacity-70">badge</span>
+                                            {selectedUser.role}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Phone</p>
+                                        <p className="font-semibold text-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg opacity-70">call</span>
+                                            {selectedUser.phone || 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Joined Date</p>
+                                    <p className="font-semibold text-slate-700 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg opacity-70">calendar_month</span>
+                                        {new Date(selectedUser.created_at).toLocaleDateString(undefined, {
+                                            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
+
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">User ID</p>
+                                    <p className="font-mono text-xs text-slate-600 truncate flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg opacity-70">fingerprint</span>
+                                        {selectedUser.id}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
+                                {selectedUser.status === 'requested' && (
+                                    <button
+                                        onClick={() => { handleApprove(selectedUser.id); setIsDetailsModalOpen(false); }}
+                                        className="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-colors flex items-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                                        Approve User
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => { handleDelete(selectedUser.id); setIsDetailsModalOpen(false); }}
+                                    className="px-5 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-colors flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                    Delete User
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

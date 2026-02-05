@@ -55,3 +55,4 @@ class EnrollmentStatus(BaseModel):
     enrollment_id: Optional[int] = None
     batch_id: Optional[int] = None
     enrolled_at: Optional[datetime] = None
+    status: Optional[str] = None

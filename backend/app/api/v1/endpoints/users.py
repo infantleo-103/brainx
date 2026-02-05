@@ -11,7 +11,7 @@ from app.services.user_service import user_service
 router = APIRouter()
 
 from app.api.deps import get_db, get_current_user
-from app.models.user import User
+from app.models.user import User, UserStatus
 from app.crud.crud_user import user as crud_user
 
 # get_db moved to deps.py
@@ -123,6 +123,11 @@ async def update_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Logic to restrict status update to Admin only
+    if user_in.status and user_in.status == UserStatus.active:
+        if current_user.role != "admin": # or UserRole.admin
+             raise HTTPException(status_code=403, detail="Only admins can activate users")
+
     updated_user = await crud_user.update(db, db_obj=user, obj_in=user_in)
     return APIResponse(
         status_code=200,
@@ -144,8 +149,8 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    # Soft delete: update status to False
-    updated_user = await crud_user.update(db, db_obj=user, obj_in={'status': False})
+    # Soft delete: update status to disabled
+    updated_user = await crud_user.update(db, db_obj=user, obj_in={'status': UserStatus.disabled})
     
     return APIResponse(
         status_code=200,

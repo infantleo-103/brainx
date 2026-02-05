@@ -72,6 +72,11 @@ export default function CourseDetails() {
         try {
             const status = await checkEnrollmentStatus(id);
             setEnrollmentStatus(status);
+            setEnrollmentStatus(status);
+            // If status is active, consider enrolled. If requested, maybe show slightly different state?
+            // Actually user implies new flow is: Click Enroll -> (Requested).
+            // So isEnrolled should maybe map to 'active' or 'requested'?
+            // Let's set isEnrolled to true so button changes state, but we rely on status string for text.
             setIsEnrolled(status.is_enrolled);
         } catch (error) {
             console.error("Failed to check enrollment status:", error);
@@ -143,9 +148,13 @@ export default function CourseDetails() {
                 if (result.status === 'already_enrolled') {
                     alert('You are already enrolled in this course!');
                 } else {
-                    alert('Successfully enrolled! Welcome to the course! 🎉');
+                    alert('Successfully enrolled! Request sent. 🎉');
                     setIsEnrolled(true);
-                    setEnrollmentStatus({ is_enrolled: true, batch_id: result.batch_id });
+                    setEnrollmentStatus({
+                        is_enrolled: true,
+                        batch_id: result.batch_id,
+                        status: 'requested' // Assume requested for new enrollments if not auto-approved
+                    });
                 }
 
                 // Navigate to dashboard
@@ -410,12 +419,12 @@ export default function CourseDetails() {
                                 <button onClick={handleEnroll}
                                     disabled={isEnrolled || enrolling}
                                     className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform flex items-center justify-center gap-2 ${isEnrolled
-                                        ? 'bg-green-500 text-white shadow-green-500/25 cursor-default'
+                                        ? (enrollmentStatus?.status === 'requested' ? 'bg-amber-500 text-white shadow-amber-500/25 cursor-default' : 'bg-green-500 text-white shadow-green-500/25 cursor-default')
                                         : enrolling
                                             ? 'bg-gray-400 text-white cursor-wait'
                                             : 'bg-primary text-white hover:bg-primary-dark shadow-primary/25 hover:-translate-y-0.5 active:translate-y-0'
                                         }`}>
-                                    {enrolling ? 'Enrolling...' : isEnrolled ? 'Already Enrolled ✓' : 'Enroll Now'}
+                                    {enrolling ? 'Enrolling...' : isEnrolled ? (enrollmentStatus?.status === 'requested' ? 'Requested' : 'Already Enrolled ✓') : 'Enroll Now'}
                                     {!isEnrolled && !enrolling && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
                                     {isEnrolled && <span className="material-symbols-outlined text-xl">check</span>}
                                 </button>

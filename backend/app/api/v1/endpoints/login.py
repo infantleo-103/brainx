@@ -11,6 +11,8 @@ from app.core.config import settings
 from app.schemas.token import Token
 from app.services.user_service import user_service
 
+from app.models.user import UserStatus
+
 router = APIRouter()
 
 @router.post("/login/access-token", response_model=Token)
@@ -25,7 +27,9 @@ async def login_access_token(
     )
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    elif not user.status:
+    # Check status (handle both Enum object and string value)
+    status_str = user.status.value if hasattr(user.status, 'value') else str(user.status)
+    if status_str not in ["active", "requested"]:
         raise HTTPException(status_code=400, detail="Inactive user")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

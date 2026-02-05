@@ -41,24 +41,25 @@ export default function Signup() {
                 email: formData.email,
                 phone: formData.phone,
                 role: formData.role.toLowerCase(), // Ensure lowercase for enum
-                status: true,
+                status: 'requested',
                 password: formData.password
             };
 
             // Step 1: Create the account
             await signup(payload);
-            
+
             // Step 2: Automatically log the user in
             const loginData = await login({
                 email: formData.email,
                 password: formData.password
             });
-            
+
             // Step 3: Store the access token
             if (loginData.access_token) {
                 localStorage.setItem('access_token', loginData.access_token);
-                alert("Account created and logged in successfully!");
-                
+                // Alert updated to reflect requested status
+                alert("Account created! Status is 'requested' until approved by admin. Logging you in...");
+
                 // Navigate to return path if provided, otherwise go to dashboard
                 const returnTo = location.state?.returnTo;
                 if (returnTo) {
@@ -193,8 +194,8 @@ export default function Signup() {
                             </form>
                             <p className="text-center text-sm text-slate-600">
                                 Already have an account?{' '}
-                                <Link 
-                                    to="/login" 
+                                <Link
+                                    to="/login"
                                     state={location.state}
                                     className="font-medium text-primary hover:text-primary-dark"
                                 >

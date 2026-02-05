@@ -247,7 +247,8 @@ async def check_enrollment_status(
             is_enrolled=True,
             enrollment_id=enrollment.id,
             batch_id=batch_member.batch_id if batch_member else None,
-            enrolled_at=enrollment.enrollment_date
+            enrolled_at=enrollment.enrollment_date,
+            status=enrollment.status.value if hasattr(enrollment.status, 'value') else enrollment.status
         )
     else:
         return EnrollmentStatus(

@@ -4,6 +4,9 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from app.models.batch import Batch, BatchMember, BatchMemberRole, BatchMemberStatus
 from app.schemas.batch import BatchCreate, BatchUpdate, BatchMemberCreate, BatchMemberUpdate
+from app.crud.crud_chat import chat as crud_chat
+from app.schemas.chat import ChatMemberCreate
+from app.models.chat import ChatMemberRoleEnum
 
 class CRUDBatch:
     async def get(self, db: AsyncSession, id: int) -> Optional[Batch]:
@@ -81,6 +84,10 @@ class CRUDBatch:
             
             # 2. Process input members
             incoming_user_ids = set()
+            
+            # Find associated chat for this batch
+            chat_obj = await crud_chat.get_by_batch(db, batch_id=db_obj.id)
+
             for m_in in members_in:
                 user_id = m_in['user_id'] if isinstance(m_in, dict) else m_in.user_id
                 role_id = m_in['role_id'] if isinstance(m_in, dict) else m_in.role_id
@@ -104,6 +111,17 @@ class CRUDBatch:
                         status=BatchMemberStatus.active
                     )
                     db.add(new_member)
+                
+                # Sync with Chat
+                if chat_obj:
+                    await crud_chat.add_member(
+                        db, 
+                        chat_id=chat_obj.id, 
+                        member_in=ChatMemberCreate(
+                            user_id=user_id,
+                            role=ChatMemberRoleEnum.student
+                        )
+                    )
             
             # 3. Handle removals (or deactivations)
             for m in existing_members:
