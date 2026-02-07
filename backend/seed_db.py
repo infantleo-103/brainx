@@ -8,7 +8,7 @@ from sqlalchemy import select, text
 
 from app.db.session import AsyncSessionLocal
 from app.core.security import get_password_hash
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.models.role import Role
 from app.models.permission import Permission
 from app.models.provider import Provider
@@ -59,31 +59,10 @@ async def get_or_create_category(session, name, **kwargs):
         logger.info(f"Category already exists: {name}")
     return category
 
-async def sync_sequences(session):
-    tables = [
-        "course_categories",
-        "providers",
-        "courses",
-        "batches",
-        "class_sessions",
-        "batch_members"
-    ]
-    for table in tables:
-        try:
-            # Check if sequence exists (usually table_id_seq)
-            # This logic assumes standard naming convention
-            seq_name = f"{table}_id_seq"
-            # We can also just run setval blindly and catch error if sequence doesn't exist
-            sql = text(f"SELECT setval('{seq_name}', (SELECT MAX(id) FROM {table}));")
-            await session.execute(sql)
-            logger.info(f"Synced sequence for {table}")
-        except Exception as e:
-            logger.warning(f"Could not sync sequence for {table}: {e}")
-    await session.commit()
+
 
 async def seed_data():
     async with AsyncSessionLocal() as session:
-        await sync_sequences(session)
         
         # Create Providers
         provider1 = await get_or_create_provider(session, "TechEd Solutions", description="Top tech education provider")
@@ -101,7 +80,7 @@ async def seed_data():
             full_name="Admin User",
             password_hash=password,
             role=UserRole.admin,
-            status=True
+            status=UserStatus.active
         )
         
         teacher = await get_or_create_user(
@@ -109,7 +88,7 @@ async def seed_data():
             full_name="John Teacher",
             password_hash=password,
             role=UserRole.teacher,
-            status=True
+            status=UserStatus.active
         )
 
         coordinator = await get_or_create_user(
@@ -117,7 +96,7 @@ async def seed_data():
             full_name="Alice Coordinator",
             password_hash=password,
             role=UserRole.coordinator,
-            status=True
+            status=UserStatus.active
         )
         
         student1 = await get_or_create_user(
@@ -125,7 +104,7 @@ async def seed_data():
             full_name="Tom Student",
             password_hash=password,
             role=UserRole.student,
-            status=True
+            status=UserStatus.active
         )
         
         student2 = await get_or_create_user(
@@ -133,7 +112,7 @@ async def seed_data():
             full_name="Jane Student",
             password_hash=password,
             role=UserRole.student,
-            status=True
+            status=UserStatus.active
         )
         
         # Create Courses

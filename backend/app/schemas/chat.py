@@ -10,13 +10,13 @@ class MessageBase(BaseModel):
     is_system_message: Optional[bool] = False
 
 class MessageCreate(MessageBase):
-    chat_id: int
-    batch_id: Optional[int] = None
+    chat_id: UUID
+    batch_id: Optional[UUID] = None
 
 class MessageInDBBase(MessageBase):
-    id: int
-    chat_id: int
-    batch_id: Optional[int] = None
+    id: UUID
+    chat_id: UUID
+    batch_id: Optional[UUID] = None
     sender_id: UUID
     created_at: datetime
 
@@ -30,16 +30,16 @@ class Message(MessageInDBBase):
 
 # --- Message Read Schemas ---
 class MessageReadBase(BaseModel):
-    message_id: int
+    message_id: UUID
     user_id: UUID
-    chat_id: int
+    chat_id: UUID
     status: str # delivered, read
 
 class MessageReadCreate(MessageReadBase):
     pass
 
 class MessageRead(MessageReadBase):
-    id: int
+    id: UUID
     read_at: datetime
 
     class Config:
@@ -49,14 +49,14 @@ class MessageRead(MessageReadBase):
 class ChatMemberBase(BaseModel):
     user_id: UUID
     role: ChatMemberRoleEnum
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
 
 class ChatMemberCreate(ChatMemberBase):
     pass
 
 class ChatMemberInDBBase(ChatMemberBase):
-    id: int
-    chat_id: int
+    id: UUID
+    chat_id: UUID
     joined_at: datetime
     
     class Config:
@@ -81,18 +81,7 @@ class ChatMember(ChatMemberInDBBase):
 # --- Chat Schemas ---
 class ChatBase(BaseModel):
     chat_type: ChatTypeEnum
-    batch_id: Optional[int] = None
-    is_official: Optional[bool] = False
-    group_icon: Optional[str] = None
-    student_id: Optional[UUID] = None
-
-class ChatCreate(ChatBase):
-    initial_members: Optional[List[ChatMemberCreate]] = []
-
-# --- Chat Schemas ---
-class ChatBase(BaseModel):
-    chat_type: ChatTypeEnum
-    batch_id: Optional[int] = None
+    batch_id: Optional[UUID] = None
     is_official: Optional[bool] = False
     group_icon: Optional[str] = None
     student_id: Optional[UUID] = None
@@ -105,7 +94,7 @@ class ChatUpdate(BaseModel):
     group_icon: Optional[str] = None
 
 class ChatInDBBase(ChatBase):
-    id: int
+    id: UUID
     created_by: UUID
     created_at: datetime
 
@@ -113,7 +102,7 @@ class ChatInDBBase(ChatBase):
         from_attributes = True
 
 class BatchSimple(BaseModel):
-    id: int
+    id: UUID
     batch_name: str
     
     class Config:
@@ -134,8 +123,8 @@ class ChatResourceCreate(ChatResourceBase):
     pass
 
 class ChatResource(ChatResourceBase):
-    id: int
-    chat_id: int
+    id: UUID
+    chat_id: UUID
     sender_id: UUID
     created_at: datetime
     

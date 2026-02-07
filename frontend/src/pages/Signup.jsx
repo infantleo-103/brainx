@@ -41,7 +41,7 @@ export default function Signup() {
                 email: formData.email,
                 phone: formData.phone,
                 role: formData.role.toLowerCase(), // Ensure lowercase for enum
-                status: true,
+                status: 'active',
                 password: formData.password
             };
 
@@ -154,7 +154,7 @@ export default function Signup() {
                                             <option value="student">Student</option>
                                             <option value="parent">Parent</option>
                                             <option value="teacher">Teacher</option>
-                                            <option value="administrator">Administrator</option>
+                                            <option value="admin">Administrator</option>
                                             <option value="coordinator">Coordinator</option>
                                         </select>
                                     </div>

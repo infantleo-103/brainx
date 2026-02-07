@@ -1,5 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel
+from uuid import UUID
 
 # Course Category Schemas
 class CourseCategoryBase(BaseModel):
@@ -13,7 +14,7 @@ class CourseCategoryUpdate(CourseCategoryBase):
     pass
 
 class CourseCategoryInDBBase(CourseCategoryBase):
-    id: int
+    id: UUID
 
     class Config:
         from_attributes = True
@@ -30,9 +31,9 @@ class CourseBase(BaseModel):
     duration_weeks: int
     image: Optional[str] = None
     status: bool = True
-    category_id: int
-    provider_id: Optional[int] = None
-    badge_id: Optional[int] = None
+    category_id: UUID
+    provider_id: Optional[UUID] = None
+    badge_id: Optional[UUID] = None
 
 class BadgeSchema(BaseModel):
     text: str
@@ -54,10 +55,10 @@ class CourseUpdate(CourseBase):
     duration_weeks: Optional[int] = None
     image: Optional[str] = None
     status: Optional[bool] = None
-    category_id: Optional[int] = None
+    category_id: Optional[UUID] = None
 
 class CourseInDBBase(CourseBase):
-    id: int
+    id: UUID
 
     class Config:
         from_attributes = True

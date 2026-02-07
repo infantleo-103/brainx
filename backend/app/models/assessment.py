@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -13,9 +14,9 @@ class AssessmentType(str, enum.Enum):
 class Assessment(Base):
     __tablename__ = "assessments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"), nullable=False)
     title = Column(String, index=True, nullable=False)
     type = Column(Enum(AssessmentType), default=AssessmentType.quiz)
     total_marks = Column(Integer, default=100)
@@ -31,8 +32,8 @@ class Assessment(Base):
 class AssessmentSubmission(Base):
     __tablename__ = "assessment_submissions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    assessment_id = Column(Integer, ForeignKey("assessments.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    assessment_id = Column(UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False)
     student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     marks_obtained = Column(Integer, nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())

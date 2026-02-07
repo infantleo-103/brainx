@@ -1,5 +1,7 @@
+import uuid
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 import enum
 
@@ -12,7 +14,7 @@ class BadgeType(str, enum.Enum):
 class CourseBadge(Base):
     __tablename__ = "course_badges"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     badge_text = Column(String, nullable=False)
     badge_icon = Column(String, nullable=True)
     badge_type = Column(Enum(BadgeType), nullable=False)

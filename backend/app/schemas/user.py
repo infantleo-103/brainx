@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
-from app.models.user import UserRole
+from app.models.user import UserRole, UserStatus
 from app.schemas.permission import Permission
 
 class UserBase(BaseModel):
@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     role: UserRole
-    status: bool = True
+    status: UserStatus = UserStatus.active
     profile_image: Optional[str] = None
 
 class UserCreate(UserBase):
@@ -23,7 +23,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     profile_image: Optional[str] = None
     role: Optional[UserRole] = None
-    status: Optional[bool] = None
+    status: Optional[UserStatus] = None
 
 class UserResponse(UserBase):
     id: UUID

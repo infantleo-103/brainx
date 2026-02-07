@@ -5,13 +5,13 @@ from typing import Optional
 
 class TeacherCourseBase(BaseModel):
     teacher_id: UUID
-    course_id: int
+    course_id: UUID
 
 class TeacherCourseCreate(TeacherCourseBase):
     pass
 
 class TeacherCourse(TeacherCourseBase):
-    id: int
+    id: UUID
     teacher: Optional[UserResponse] = None
     
     model_config = ConfigDict(from_attributes=True)

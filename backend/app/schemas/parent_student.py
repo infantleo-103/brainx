@@ -11,7 +11,7 @@ class ParentStudentCreate(ParentStudentBase):
     pass
 
 class ParentStudent(ParentStudentBase):
-    id: int
+    id: UUID
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

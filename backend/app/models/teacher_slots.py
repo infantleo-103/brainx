@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import Column, Integer, Time, Date, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -13,14 +14,14 @@ class SlotStatus(str, enum.Enum):
 class TeacherTimeSlot(Base):
     __tablename__ = "teacher_time_slots"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     teacher_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     slot_date = Column(Date, nullable=False, index=True)
     slot_start = Column(Time, nullable=False)
     slot_end = Column(Time, nullable=False)
     status = Column(Enum(SlotStatus), default=SlotStatus.available, nullable=False)
     booked_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=True)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

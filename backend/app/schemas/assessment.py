@@ -3,10 +3,12 @@ from typing import Optional, List, Any, Dict
 from datetime import datetime
 from app.models.assessment import AssessmentType
 
+from uuid import UUID
+
 class AssessmentBase(BaseModel):
     title: str
-    course_id: int
-    batch_id: int
+    course_id: UUID
+    batch_id: UUID
     type: AssessmentType = AssessmentType.quiz
     total_marks: int = 100
     due_date: Optional[datetime] = None
@@ -22,7 +24,7 @@ class AssessmentUpdate(BaseModel):
     questions: Optional[Dict[str, Any]] = None
 
 class AssessmentInDBBase(AssessmentBase):
-    id: int
+    id: UUID
     template_url: Optional[str] = None
     created_at: datetime
 

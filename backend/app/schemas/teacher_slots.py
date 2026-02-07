@@ -42,13 +42,13 @@ class TeacherSlotUpdate(BaseModel):
     slot_end: Optional[time] = None
     status: Optional[SlotStatus] = None
     booked_by: Optional[UUID] = None
-    batch_id: Optional[int] = None
+    batch_id: Optional[UUID] = None
 
 class TeacherSlot(TeacherSlotBase):
-    id: int
+    id: UUID
     teacher_id: UUID
     booked_by: Optional[UUID] = None
-    batch_id: Optional[int] = None
+    batch_id: Optional[UUID] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

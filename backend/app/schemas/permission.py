@@ -14,9 +14,11 @@ class PermissionCreate(PermissionBase):
 class PermissionUpdate(PermissionBase):
     pass
 
+from uuid import UUID
+
 class PermissionInDBBase(PermissionBase):
-    id: int
-    role_id: int
+    id: UUID
+    role_id: UUID
 
     class Config:
         from_attributes = True

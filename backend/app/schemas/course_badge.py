@@ -17,8 +17,10 @@ class CourseBadgeUpdate(BaseModel):
     badge_type: Optional[BadgeType] = None
     css_class_name: Optional[str] = None
 
+from uuid import UUID
+
 class CourseBadge(CourseBadgeBase):
-    id: int
+    id: UUID
 
     model_config = ConfigDict(from_attributes=True)
 

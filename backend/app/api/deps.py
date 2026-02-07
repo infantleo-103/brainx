@@ -10,7 +10,7 @@ from app.core import security
 from app.core.config import settings
 from app.crud.crud_user import user as crud_user
 from app.db.session import AsyncSessionLocal
-from app.models.user import User
+from app.models.user import User, UserStatus
 from app.schemas.token import TokenPayload
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -37,6 +37,6 @@ async def get_current_user(
     user = await crud_user.get_by_email(db, email=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not user.status:
+    if user.status != UserStatus.active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user

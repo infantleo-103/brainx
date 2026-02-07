@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class ClassSessionBase(BaseModel):
-    batch_id: int
-    course_id: int
+    batch_id: UUID
+    course_id: UUID
     teacher_id: UUID
     start_time: datetime
     end_time: datetime
@@ -16,8 +16,8 @@ class ClassSessionCreate(ClassSessionBase):
     pass
 
 class ClassSessionUpdate(BaseModel):
-    batch_id: Optional[int] = None
-    course_id: Optional[int] = None
+    batch_id: Optional[UUID] = None
+    course_id: Optional[UUID] = None
     teacher_id: Optional[UUID] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
@@ -25,6 +25,6 @@ class ClassSessionUpdate(BaseModel):
     is_recorded: Optional[bool] = None
 
 class ClassSession(ClassSessionBase):
-    id: int
+    id: UUID
 
     model_config = ConfigDict(from_attributes=True)

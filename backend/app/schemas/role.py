@@ -12,8 +12,10 @@ class RoleCreate(RoleBase):
 class RoleUpdate(RoleBase):
     pass
 
+from uuid import UUID
+
 class RoleInDBBase(RoleBase):
-    id: int
+    id: UUID
     permissions: List[Permission] = []
 
     class Config:

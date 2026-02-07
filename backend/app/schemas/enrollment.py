@@ -10,12 +10,12 @@ class EnrollmentStatusEnum(str, Enum):
     paused = "paused"
 
 class EnrollmentBase(BaseModel):
-    course_id: int
+    course_id: UUID
     teacher_id: Optional[UUID] = None
     preferred_time: Optional[str] = None
 
 class EnrollmentCreate(EnrollmentBase):
-    slot_id: Optional[int] = None  # For frontend compatibility
+    slot_id: Optional[UUID] = None  # For frontend compatibility
 
 class EnrollmentUpdate(BaseModel):
     teacher_id: Optional[UUID] = None
@@ -23,7 +23,7 @@ class EnrollmentUpdate(BaseModel):
     status: Optional[EnrollmentStatusEnum] = None
 
 class EnrollmentInDBBase(EnrollmentBase):
-    id: int
+    id: UUID
     student_id: UUID
     enrollment_date: datetime
     status: EnrollmentStatusEnum
@@ -37,13 +37,13 @@ class Enrollment(EnrollmentInDBBase):
 from app.schemas.course import Course
 
 class EnrollmentResponse(BaseModel):
-    id: int
+    id: UUID
     student_id: UUID
-    course_id: int
+    course_id: UUID
     course: Optional[Course] = None
-    batch_id: Optional[int] = None
+    batch_id: Optional[UUID] = None
     batch_name: Optional[str] = None
-    chat_id: Optional[int] = None
+    chat_id: Optional[UUID] = None
     enrollment_date: datetime
     status: str
     
@@ -52,6 +52,6 @@ class EnrollmentResponse(BaseModel):
 
 class EnrollmentStatus(BaseModel):
     is_enrolled: bool
-    enrollment_id: Optional[int] = None
-    batch_id: Optional[int] = None
+    enrollment_id: Optional[UUID] = None
+    batch_id: Optional[UUID] = None
     enrolled_at: Optional[datetime] = None

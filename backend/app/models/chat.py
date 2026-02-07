@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -21,9 +22,9 @@ class ChatMemberRoleEnum(str, enum.Enum):
 class Chat(Base):
     __tablename__ = "chats"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     chat_type = Column(Enum(ChatTypeEnum), nullable=False)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=True) # Optional for direct chats? User schema said batch_id
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"), nullable=True) # Optional for direct chats? User schema said batch_id
     is_official = Column(Boolean, default=False)
     group_icon = Column(String, nullable=True)
     student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
@@ -41,10 +42,10 @@ class Chat(Base):
 class ChatMember(Base):
     __tablename__ = "chat_members"
 
-    id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True) # Ref schema
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True) # Ref schema
     role = Column(Enum(ChatMemberRoleEnum), nullable=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -63,9 +64,9 @@ class ChatMember(Base):
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=True) # Redundant if in chat, but in schema
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"), nullable=True) # Redundant if in chat, but in schema
     sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     message = Column(Text, nullable=False)
     is_system_message = Column(Boolean, default=False)
@@ -78,10 +79,10 @@ class Message(Base):
 class MessageRead(Base):
     __tablename__ = "message_reads"
 
-    id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     read_at = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Enum("delivered", "read", name="messagereadstatusenum"), default="read")
 
@@ -94,8 +95,8 @@ class MessageRead(Base):
 class ChatResource(Base):
     __tablename__ = "chat_resources"
 
-    id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     file_url = Column(String, nullable=False)
     file_name = Column(String, nullable=False)

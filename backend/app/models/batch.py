@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -19,8 +20,8 @@ class BatchMemberStatus(str, enum.Enum):
 class Batch(Base):
     __tablename__ = "batches"
 
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     batch_name = Column(String, index=True, nullable=False)
     teacher_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True) # Assuming 'users' table exists
     start_date = Column(Date, nullable=True)
@@ -41,10 +42,10 @@ class Batch(Base):
 class BatchMember(Base):
     __tablename__ = "batch_members"
 
-    id = Column(Integer, primary_key=True, index=True)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True)
     role = Column(Enum(BatchMemberRole), default=BatchMemberRole.student)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Enum(BatchMemberStatus), default=BatchMemberStatus.active)

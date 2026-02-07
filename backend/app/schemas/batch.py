@@ -19,7 +19,7 @@ class BatchMemberStatusEnum(str, Enum):
 
 # Batch Schemas
 class BatchBase(BaseModel):
-    course_id: int
+    course_id: UUID
     batch_name: str
     teacher_id: Optional[UUID] = None
     start_date: Optional[date] = None
@@ -32,13 +32,13 @@ class BatchBase(BaseModel):
 
 class BatchMemberInput(BaseModel):
     user_id: UUID
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
 
 class BatchCreate(BatchBase):
     members: Optional[List[BatchMemberInput]] = []
 
 class BatchUpdate(BatchBase):
-    course_id: Optional[int] = None
+    course_id: Optional[UUID] = None
     batch_name: Optional[str] = None
     teacher_id: Optional[UUID] = None
     start_date: Optional[date] = None
@@ -49,7 +49,7 @@ class BatchUpdate(BatchBase):
     members: Optional[List[BatchMemberInput]] = None
 
 class BatchInDBBase(BatchBase):
-    id: int
+    id: UUID
     created_at: datetime
 
     class Config:
@@ -63,7 +63,7 @@ class BatchMemberDetail(BaseModel):
     user_id: UUID
     user_name: str
     user_email: str
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True
@@ -79,26 +79,15 @@ class BatchMemberDetail(BaseModel):
 
 class BatchDetail(Batch):
     teacher_name: Optional[str] = None
-    members: List[BatchMemberDetail] = []
+    members: List[BatchMemberDetail] = []  # Assuming BatchMemberDetail defined above
 
-    @staticmethod
-    def from_orm_to_schema(batch_obj):
-        # Manually map if Pydantic v2 from_attributes doesn't handle nested flattening easily
-        # or rely on getter_dict. For simplicity let's rely on standard init if we can,
-        # otherwise we might need a root validator or similar.
-        # Actually, simpler approach: use a validator or a property in the schema?
-        # Pydantic doesn't support properties well for mapping.
-        # Let's try to map it in the endpoint or CRUD for clarity, OR use a validator here.
-        pass
-        
-    # We will map this in the endpoint return or use a custom validator
-
+    # ... (omitted method)
 
 # Batch Member Schemas
 class BatchMemberBase(BaseModel):
-    batch_id: int
+    batch_id: UUID
     user_id: UUID
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
     role: Optional[BatchMemberRoleEnum] = BatchMemberRoleEnum.student
     status: Optional[BatchMemberStatusEnum] = BatchMemberStatusEnum.active
 
@@ -106,13 +95,16 @@ class BatchMemberCreate(BatchMemberBase):
     pass
 
 class BatchMemberUpdate(BaseModel):
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
     role: Optional[BatchMemberRoleEnum] = None
     status: Optional[BatchMemberStatusEnum] = None
 
 class BatchMemberInDBBase(BatchMemberBase):
-    id: int
+    id: UUID
     joined_at: datetime
+
+    class Config:
+        from_attributes = True
 
     class Config:
         from_attributes = True
