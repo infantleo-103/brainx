@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -6,7 +7,7 @@ from app.models.course import Course, CourseCategory
 from app.schemas.course import CourseCreate, CourseUpdate, CourseCategoryCreate, CourseCategoryUpdate
 
 class CRUDCourseCategory:
-    async def get(self, db: AsyncSession, id: int) -> Optional[CourseCategory]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[CourseCategory]:
         result = await db.execute(select(CourseCategory).filter(CourseCategory.id == id))
         return result.scalars().first()
 
@@ -33,7 +34,7 @@ class CRUDCourseCategory:
         await db.refresh(db_obj)
         return db_obj
 
-    async def remove(self, db: AsyncSession, *, id: int) -> CourseCategory:
+    async def remove(self, db: AsyncSession, *, id: UUID) -> CourseCategory:
         result = await db.execute(select(CourseCategory).filter(CourseCategory.id == id))
         obj = result.scalars().first()
         await db.delete(obj)
@@ -41,7 +42,7 @@ class CRUDCourseCategory:
         return obj
 
 class CRUDCourse:
-    async def get(self, db: AsyncSession, id: int) -> Optional[Course]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[Course]:
         result = await db.execute(
             select(Course)
             .options(selectinload(Course.badge), selectinload(Course.provider))
@@ -57,11 +58,20 @@ class CRUDCourse:
         )
         return result.scalars().all()
 
-    async def get_by_badge(self, db: AsyncSession, *, badge_id: int, skip: int = 0, limit: int = 100) -> List[Course]:
+    async def get_by_badge(self, db: AsyncSession, *, badge_id: UUID, skip: int = 0, limit: int = 100) -> List[Course]:
         result = await db.execute(
             select(Course)
             .options(selectinload(Course.badge), selectinload(Course.provider))
             .filter(Course.badge_id == badge_id)
+            .offset(skip).limit(limit)
+        )
+        return result.scalars().all()
+
+    async def get_by_category(self, db: AsyncSession, *, category_id: UUID, skip: int = 0, limit: int = 100) -> List[Course]:
+        result = await db.execute(
+            select(Course)
+            .options(selectinload(Course.badge), selectinload(Course.provider))
+            .filter(Course.category_id == category_id)
             .offset(skip).limit(limit)
         )
         return result.scalars().all()
@@ -73,6 +83,7 @@ class CRUDCourse:
             level=obj_in.level,
             duration_hours=obj_in.duration_hours,
             duration_weeks=obj_in.duration_weeks,
+            image=obj_in.image,
             status=obj_in.status,
             category_id=obj_in.category_id,
             provider_id=obj_in.provider_id,
@@ -94,7 +105,7 @@ class CRUDCourse:
         # Return fully loaded object with relationships
         return await self.get(db, id=db_obj.id)
 
-    async def remove(self, db: AsyncSession, *, id: int) -> Course:
+    async def remove(self, db: AsyncSession, *, id: UUID) -> Course:
         result = await db.execute(select(Course).filter(Course.id == id))
         obj = result.scalars().first()
         await db.delete(obj)

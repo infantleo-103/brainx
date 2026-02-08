@@ -3,32 +3,64 @@ import { Link } from 'react-router-dom';
 
 import Header from '../components/Header';
 import CourseCard from '../components/CourseCard';
-import { getCourses } from '../services/api';
+import { getCourses, getCoursesByCategory } from '../services/api';
 
 const LandingPage = () => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [trendingCourses, setTrendingCourses] = useState([]);
+    const [academicCourses, setAcademicCourses] = useState([]);
+    const [professionalCourses, setProfessionalCourses] = useState([]);
 
     useEffect(() => {
-        const fetchTrending = async () => {
+        const fetchCourses = async () => {
             try {
-                const data = await getCourses(0, 4);
-                const mapped = data.map(c => ({
-                    id: c.id,
-                    title: c.title,
-                    description: c.description,
-                    image: c.image,
-                    rating: '4.8',
-                    badge: c.badge ? { text: c.badge.badge_text, className: c.badge.css_class_name } : null,
-                    provider: c.provider ? { name: c.provider.name, logo: c.provider.logo_url } : { name: 'Brainx' },
-                    metaText: `${c.level}`
-                }));
-                setTrendingCourses(mapped);
+                // Category IDs
+                const SKILLS_CATEGORY_ID = '5a3d036a-1120-4df7-802d-f9e8be03552a';
+                const ACADEMIC_CATEGORY_ID = 'e6324c81-6bc5-4e19-a2ab-4331c44c5341';
+                
+                // Map course data
+                const mapCourseData = (course) => ({
+                    id: course.id,
+                    title: course.title,
+                    description: course.description,
+                    image: course.image || 'https://via.placeholder.com/300x200',
+                    rating: course.rating || '4.8',
+                    badge: course.badge ? {
+                        text: course.badge.text,
+                        className: course.badge.className || 'bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider'
+                    } : null,
+                    provider: course.provider ? {
+                        name: course.provider.name,
+                        shorthand: course.provider.name.substring(0, 3).toUpperCase(),
+                        shorthandBg: 'bg-primary'
+                    } : { name: 'Brainx' },
+                    metaText: course.metaText || course.level || 'Course'
+                });
+
+                // Fetch courses by category
+                const [academicData, skillsData, allCoursesData] = await Promise.all([
+                    getCoursesByCategory(ACADEMIC_CATEGORY_ID, 0, 4),
+                    getCoursesByCategory(SKILLS_CATEGORY_ID, 0, 4),
+                    getCourses(0, 12)
+                ]);
+                
+                const academic = academicData.map(mapCourseData);
+                const professional = skillsData.map(mapCourseData);
+                
+                // Get random 4 for trending from all courses
+                const trending = allCoursesData
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 4)
+                    .map(mapCourseData);
+                
+                setAcademicCourses(academic);
+                setProfessionalCourses(professional);
+                setTrendingCourses(trending);
             } catch (err) {
-                console.error("Failed to fetch trending courses", err);
+                console.error("Failed to fetch courses", err);
             }
         };
-        fetchTrending();
+        fetchCourses();
     }, []);
 
     const heroImages = [
@@ -70,18 +102,6 @@ const LandingPage = () => {
                             </div>
                         ))}
                     </div>
-                    {/* 
-                    <div className="absolute inset-0 w-full h-full pointer-events-none">
-                         <div
-                            className="absolute right-[15%] top-[20%] w-24 h-24 bg-white/20 backdrop-blur-md rounded-2xl rotate-12 flex items-center justify-center shadow-lg animate-pulse">
-                            <span className="material-symbols-outlined text-white text-5xl drop-shadow-md">shield</span>
-                        </div>
-                        <div className="absolute right-[25%] bottom-[20%] w-20 h-20 bg-blue-400/30 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg"
-                            style={{ animationDelay: "1s" }}>
-                            <span className="material-symbols-outlined text-white text-4xl drop-shadow-md">auto_graph</span>
-                        </div>
-                    </div> */}
-
                     <div className="layout-container px-6 md:px-10 lg:px-40 h-full relative z-10 flex items-center pointer-events-none">
                         <div className="bg-white p-8 md:p-10 max-w-lg shadow-card-float rounded-[4px] relative z-20 pointer-events-auto">
                             <h1
@@ -94,7 +114,7 @@ const LandingPage = () => {
                             <div className="flex flex-wrap gap-4">
                                 <button
                                     className="h-12 px-6 bg-primary text-white font-bold text-sm hover:bg-primary-dark transition-colors shadow-lg shadow-primary/30 flex items-center justify-center">
-                                    Get Personal Plan
+                                    Get Courses
                                 </button>
                                 <button
                                     className="h-12 px-6 bg-white text-primary border border-primary font-bold text-sm hover:bg-gray-50 transition-colors flex items-center justify-center">
@@ -153,44 +173,13 @@ const LandingPage = () => {
                             </Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <CourseCard
-                                title="Modern European History"
-                                description="An in-depth analysis of political and social movements from 1789."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAw5ouygVjHBJAMbKvNO82eO9Vnbh2mGNzFV_JUw1R_acPWoC4N2DH4iqDHJREoE9GGnAYIzYnrTrORp4erZIgVMQBKqxBoEdvtYMSfdi76IUp5S8B6NL2K_hNSxPt078Vd4Oq6cAVQcpIh1DNIvlZmxy97FrALUMSc69ES0KhtBBsHOfFKWOIcD7njHUMuZDi85XyAjv8DskrcQ1-JNMWeJwyoH1ntA3ZLCBzkeQGsaCeiO5bVvSZXBme49GFkgx58tl-ceG3cwQk"
-                                badge={{ text: 'Humanities', className: 'bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider' }}
-                                rating="4.8"
-                                metaText="History Dept."
-                                provider={{ name: 'Oxford Univ.', logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBkky04Ox5SRgP6_Y8J_4L4dXdfRY6Ovhnodv16D0h4JEYRgNViUrncVaIFX_1hAJta9DWdoeLdG64dKOg7PIaawsTftxs3S_lx-0mmdZXQ7m4VRA8-ObiQUOkngbyngTDw-XhBDHXfzOsslLCix_RT9XXUOUJ1NCBy1YAOgD8N3vE9fR0wF8fJZ9nRlpEvoALeVoIKidH_CKFhO549JnozMJjfrFnB--BTVNNHRYRXh8D9nPUAk50mrAL-0ZNxvavQr6XJJ1u4Ey4' }}
-                            />
-                            <CourseCard
-                                title="Advanced Calculus"
-                                description="Understanding limits, derivatives, integrals, and infinite series."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuC5jeA5kJD9PH6vFYDZuQ-cOvWsQemoyH7k-g3YOC94qKRFQFKjJsUoFzogEb9UTD5_aei3Om-iHjLjSzNiqr3AMR0TETUBQ_U2pzzSXVDnfN_nQU89Utk-_glTsBQqxHk0OpRClGikV__gA8iYEBHzHgrsvtISKbcqeUEm8mzZk8U3TsKqxQBT1YU-Yr9O-S2iHtosKagFAaLBsfheOF6rmXsFjq49tv_IC-DWTyF2bRbmPgR5EGTNipuCObOIDAtGbbWa8MOuk_w"
-                                badge={{ text: 'Math', className: 'bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider' }}
-                                rating="4.7"
-                                metaText="Math Dept."
-                                provider={{ name: 'MIT OpenWare', shorthand: 'MIT', shorthandBg: 'bg-red-800' }}
-                            />
-                            <CourseCard
-                                title="Ethics & Society"
-                                description="Exploring moral dilemmas in the modern technological landscape."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAw5ouygVjHBJAMbKvNO82eO9Vnbh2mGNzFV_JUw1R_acPWoC4N2DH4iqDHJREoE9GGnAYIzYnrTrORp4erZIgVMQBKqxBoEdvtYMSfdi76IUp5S8B6NL2K_hNSxPt078Vd4Oq6cAVQcpIh1DNIvlZmxy97FrALUMSc69ES0KhtBBsHOfFKWOIcD7njHUMuZDi85XyAjv8DskrcQ1-JNMWeJwyoH1ntA3ZLCBzkeQGsaCeiO5bVvSZXBme49GFkgx58tl-ceG3cwQk"
-                                imageFilter="hue-rotate(45deg)"
-                                badge={{ text: 'Philosophy', className: 'bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider' }}
-                                rating="4.9"
-                                metaText="Philosophy Dept."
-                                provider={{ name: 'Yale Univ.', shorthand: 'YALE', shorthandBg: 'bg-blue-900' }}
-                            />
-                            <CourseCard
-                                title="Quantum Mechanics"
-                                description="A fundamental introduction to quantum physics and wave theory."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuC5jeA5kJD9PH6vFYDZuQ-cOvWsQemoyH7k-g3YOC94qKRFQFKjJsUoFzogEb9UTD5_aei3Om-iHjLjSzNiqr3AMR0TETUBQ_U2pzzSXVDnfN_nQU89Utk-_glTsBQqxHk0OpRClGikV__gA8iYEBHzHgrsvtISKbcqeUEm8mzZk8U3TsKqxQBT1YU-Yr9O-S2iHtosKagFAaLBsfheOF6rmXsFjq49tv_IC-DWTyF2bRbmPgR5EGTNipuCObOIDAtGbbWa8MOuk_w"
-                                imageFilter="hue-rotate(180deg)"
-                                badge={{ text: 'Physics', className: 'bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider' }}
-                                rating="4.6"
-                                metaText="Science Dept."
-                                provider={{ name: 'Princeton', shorthand: 'PU', shorthandBg: 'bg-orange-700' }}
-                            />
+                            {academicCourses.length > 0 ? (
+                                academicCourses.map(course => (
+                                    <CourseCard key={course.id} {...course} />
+                                ))
+                            ) : (
+                                <div className="col-span-4 text-center text-gray-400 py-8">Loading academic courses...</div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -209,45 +198,13 @@ const LandingPage = () => {
                             </Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <CourseCard
-                                title="Full-Stack React"
-                                description="Master modern web development with React, Node.js, and cloud deployment."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAAm4CMB9p_vM-2WRCkGAFih7mJxIS5wsSQR4yXoWP7aczzyy31vvd6n5d7GVz1hr1p6VCxA7xdKd6BvhzaQ4gZX-b0-vfz1a5twEECOxh4jaXxrPcr0B_D89Cx2KEb0bi5rVyDTQVYH3bGJWEbAlCpGqDDB0cmtLjENjxRE-d2FDhS_HiYdNlYI_kNXcLyPlfeOe4VrKQuYO0ph-7Q2Z47vlTWabG4E2oX5wLkt7-G_uLhjL5Axn3AIwPnwo6iEM40hVo_ZkyoPoY"
-                                badge={{ text: 'Dev', className: 'bg-primary text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md' }}
-                                rating="4.9"
-                                metaText="Tech Track"
-                                provider={{ name: 'DevAcademy', shorthand: 'DEV', shorthandBg: 'bg-black' }}
-                            />
-                            <CourseCard
-                                title="Python for Data Science"
-                                description="Learn to analyze data, create visualizations, and build ML models."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAAm4CMB9p_vM-2WRCkGAFih7mJxIS5wsSQR4yXoWP7aczzyy31vvd6n5d7GVz1hr1p6VCxA7xdKd6BvhzaQ4gZX-b0-vfz1a5twEECOxh4jaXxrPcr0B_D89Cx2KEb0bi5rVyDTQVYH3bGJWEbAlCpGqDDB0cmtLjENjxRE-d2FDhS_HiYdNlYI_kNXcLyPlfeOe4VrKQuYO0ph-7Q2Z47vlTWabG4E2oX5wLkt7-G_uLhjL5Axn3AIwPnwo6iEM40hVo_ZkyoPoY"
-                                imageFilter="hue-rotate(90deg)"
-                                badge={{ text: 'Data', className: 'bg-primary text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md' }}
-                                rating="4.7"
-                                metaText="Data Science"
-                                provider={{ name: 'PyInstitute', shorthand: 'PY', shorthandBg: 'bg-blue-600' }}
-                            />
-                            <CourseCard
-                                title="Digital Growth Strategies"
-                                description="SEO, SEM, and content marketing strategies for 2024."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAAm4CMB9p_vM-2WRCkGAFih7mJxIS5wsSQR4yXoWP7aczzyy31vvd6n5d7GVz1hr1p6VCxA7xdKd6BvhzaQ4gZX-b0-vfz1a5twEECOxh4jaXxrPcr0B_D89Cx2KEb0bi5rVyDTQVYH3bGJWEbAlCpGqDDB0cmtLjENjxRE-d2FDhS_HiYdNlYI_kNXcLyPlfeOe4VrKQuYO0ph-7Q2Z47vlTWabG4E2oX5wLkt7-G_uLhjL5Axn3AIwPnwo6iEM40hVo_ZkyoPoY"
-                                imageFilter="hue-rotate(220deg) sepia(0.5)"
-                                badge={{ text: 'Marketing', className: 'bg-primary text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md' }}
-                                rating="4.5"
-                                metaText="Marketing"
-                                provider={{ name: 'GrowthLabs', shorthand: 'MK', shorthandBg: 'bg-orange-500' }}
-                            />
-                            <CourseCard
-                                title="UI/UX Masterclass"
-                                description="From wireframing to high-fidelity prototyping with Figma."
-                                image="https://lh3.googleusercontent.com/aida-public/AB6AXuAAm4CMB9p_vM-2WRCkGAFih7mJxIS5wsSQR4yXoWP7aczzyy31vvd6n5d7GVz1hr1p6VCxA7xdKd6BvhzaQ4gZX-b0-vfz1a5twEECOxh4jaXxrPcr0B_D89Cx2KEb0bi5rVyDTQVYH3bGJWEbAlCpGqDDB0cmtLjENjxRE-d2FDhS_HiYdNlYI_kNXcLyPlfeOe4VrKQuYO0ph-7Q2Z47vlTWabG4E2oX5wLkt7-G_uLhjL5Axn3AIwPnwo6iEM40hVo_ZkyoPoY"
-                                imageFilter="invert(0.1)"
-                                badge={{ text: 'Design', className: 'bg-primary text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md' }}
-                                rating="4.8"
-                                metaText="Design"
-                                provider={{ name: 'DesignCo', shorthand: 'UX', shorthandBg: 'bg-pink-500' }}
-                            />
+                            {professionalCourses.length > 0 ? (
+                                professionalCourses.map(course => (
+                                    <CourseCard key={course.id} {...course} />
+                                ))
+                            ) : (
+                                <div className="col-span-4 text-center text-gray-400 py-8">Loading professional courses...</div>
+                            )}
                         </div>
                     </div>
                     <div>

@@ -25,6 +25,10 @@ import AssessmentAttempt from './pages/student/AssessmentAttempt';
 import StudentExam from './pages/student/StudentExam';
 import StudentAttendance from './pages/student/StudentAttendance';
 import Teachers from './pages/Teachers';
+import AdminTeachers from './pages/AdminTeachers';
+import AdminParents from './pages/AdminParents';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TeacherClasses from './pages/teacher/TeacherClasses';
 import MeetingManagement from './pages/teacher/MeetingManagement';
@@ -48,6 +52,7 @@ function App() {
           {/* Protected Routes with Layout */}
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             <Route path="/teacher/classes" element={<TeacherClasses />} />
             <Route path="/teacher/classes/:courseId/details" element={<TeacherClassDetails />} />
@@ -66,6 +71,9 @@ function App() {
             <Route path="/assessment/create" element={<CreateAssessment />} />
             <Route path="/courses/create" element={<CreateCourse />} />
             <Route path="/teachers" element={<Teachers />} />
+            <Route path="/admin/teachers" element={<AdminTeachers />} />
+            <Route path="/admin/parents" element={<AdminParents />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/classes/create" element={<CreateClass />} />
           </Route>
         </Routes>

@@ -9,7 +9,7 @@ from app.models.chat import Chat, ChatMember, Message, ChatMemberRoleEnum, Messa
 from app.schemas.chat import ChatCreate, ChatUpdate, MessageCreate, ChatMemberCreate, ChatResourceCreate
 
 class CRUDChat:
-    async def get(self, db: AsyncSession, id: int) -> Optional[Chat]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[Chat]:
         result = await db.execute(
             select(Chat)
             .options(
@@ -70,7 +70,7 @@ class CRUDChat:
         # Instead of refresh, we fetch the full object with relations to avoid MissingGreenlet
         return await self.get(db, db_obj.id)
     
-    async def get_by_batch(self, db: AsyncSession, batch_id: int) -> Optional[Chat]:
+    async def get_by_batch(self, db: AsyncSession, batch_id: UUID) -> Optional[Chat]:
         """Find chat for a specific batch"""
         result = await db.execute(
             select(Chat)
@@ -79,7 +79,7 @@ class CRUDChat:
         )
         return result.scalars().first()
     
-    async def add_member(self, db: AsyncSession, *, chat_id: int, member_in: ChatMemberCreate) -> ChatMember:
+    async def add_member(self, db: AsyncSession, *, chat_id: UUID, member_in: ChatMemberCreate) -> ChatMember:
         """Add a member to an existing chat"""
         # Check if member already exists
         existing = await db.execute(
@@ -100,7 +100,7 @@ class CRUDChat:
         await db.refresh(member)
         return member
 
-    async def create_resource(self, db: AsyncSession, *, obj_in: ChatResourceCreate, chat_id: int, sender_id: UUID) -> ChatResource:
+    async def create_resource(self, db: AsyncSession, *, obj_in: ChatResourceCreate, chat_id: UUID, sender_id: UUID) -> ChatResource:
         db_obj = ChatResource(
             chat_id=chat_id,
             sender_id=sender_id,
@@ -127,7 +127,7 @@ class CRUDMessage:
         await db.refresh(db_obj)
         return db_obj
 
-    async def get_by_chat(self, db: AsyncSession, chat_id: int, skip: int = 0, limit: int = 50) -> List[Message]:
+    async def get_by_chat(self, db: AsyncSession, chat_id: UUID, skip: int = 0, limit: int = 50) -> List[Message]:
         # 1. Get raw messages
         result = await db.execute(
             select(Message)
@@ -175,7 +175,7 @@ class CRUDMessage:
         return messages
 
 class CRUDMessageRead:
-    async def mark_read(self, db: AsyncSession, message_id: int, user_id: UUID, chat_id: int) -> Optional[MessageRead]:
+    async def mark_read(self, db: AsyncSession, message_id: UUID, user_id: UUID, chat_id: UUID) -> Optional[MessageRead]:
         # Check if already read
         result = await db.execute(
             select(MessageRead)
@@ -204,7 +204,7 @@ class CRUDMessageRead:
             return await self.get(db, message_id, user_id)
         return db_obj
 
-    async def get(self, db: AsyncSession, message_id: int, user_id: UUID) -> Optional[MessageRead]:
+    async def get(self, db: AsyncSession, message_id: UUID, user_id: UUID) -> Optional[MessageRead]:
         result = await db.execute(
              select(MessageRead)
             .filter(

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, getCourses, assignTeacherToCourse, getTeacherCourses, removeTeacherFromCourse, deleteUser, updateUser, createBulkTimeSlots, getTeacherTimeSlots, deleteTimeSlot } from '../services/api';
+import { getUsers, getCourses, assignTeacherToCourse, getTeacherCourses, removeTeacherFromCourse, deleteUser, updateUser, getTeacherAvailability, updateTeacherAvailability } from '../services/api';
 
 export default function Teachers() {
     const [teachers, setTeachers] = useState([]);
@@ -11,15 +11,17 @@ export default function Teachers() {
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [assigning, setAssigning] = useState(false);
     
-    // Time Slot Management State
+    // Availability Management State
     const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
-    const [teacherSlots, setTeacherSlots] = useState([]);
-    const [slotFormData, setSlotFormData] = useState({
-        dates: [],
-        startTime: '09:00',
-        endTime: '17:00'
+    const [availabilityData, setAvailabilityData] = useState({
+        weekday_available: false,
+        weekday_start: '09:00',
+        weekday_end: '17:00',
+        weekend_available: false,
+        weekend_start: '10:00',
+        weekend_end: '14:00'
     });
-    const [creatingSlots, setCreatingSlots] = useState(false);
+    const [savingAvailability, setSavingAvailability] = useState(false);
 
     useEffect(() => {
         fetchTeachers();
@@ -110,93 +112,61 @@ export default function Teachers() {
         }
     };
 
-    // Time Slot Management Handlers
-    const handleManageTimeSlots = async (teacher) => {
+    // Availability Management Handlers
+    const handleManageAvailability = async (teacher) => {
         setSelectedTeacher(teacher);
         setIsTimeSlotModalOpen(true);
-        fetchTeacherTimeSlots(teacher.id);
-        // Reset form
-        setSlotFormData({
-            dates: [],
-            startTime: '09:00',
-            endTime: '17:00'
-        });
-    };
-
-    const fetchTeacherTimeSlots = async (teacherId) => {
-        try {
-            const slots = await getTeacherTimeSlots(teacherId);
-            setTeacherSlots(slots);
-        } catch (error) {
-            console.error("Failed to fetch time slots:", error);
-        }
-    };
-
-    const handleCreateTimeSlots = async () => {
-        if (!selectedTeacher || slotFormData.dates.length === 0) {
-            alert("Please select at least one date");
-            return;
-        }
-
-        setCreatingSlots(true);
-        try {
-            const payload = {
-                teacher_id: selectedTeacher.id,
-                slot_dates: slotFormData.dates,
-                start_time: slotFormData.startTime,
-                end_time: slotFormData.endTime
-            };
-            
-            await createBulkTimeSlots(payload);
-            await fetchTeacherTimeSlots(selectedTeacher.id);
-            
-            // Reset form
-            setSlotFormData({
-                dates: [],
-                startTime: '09:00',
-                endTime: '17:00'
-            });
-            
-            alert("Time slots created successfully!");
-        } catch (error) {
-            console.error("Failed to create time slots:", error);
-            alert("Failed to create time slots. " + (error.message || ""));
-        } finally {
-            setCreatingSlots(false);
-        }
-    };
-
-    const handleDeleteSlot = async (slotId) => {
-        if (!window.confirm("Delete this time slot?")) return;
         
+        // Fetch existing availability
         try {
-            await deleteTimeSlot(slotId);
-            await fetchTeacherTimeSlots(selectedTeacher.id);
+            const availability = await getTeacherAvailability(teacher.id);
+            if (availability) {
+                setAvailabilityData({
+                    weekday_available: availability.weekday_available || false,
+                    weekday_start: availability.weekday_start?.substring(0, 5) || '09:00',
+                    weekday_end: availability.weekday_end?.substring(0, 5) || '17:00',
+                    weekend_available: availability.weekend_available || false,
+                    weekend_start: availability.weekend_start?.substring(0, 5) || '10:00',
+                    weekend_end: availability.weekend_end?.substring(0, 5) || '14:00'
+                });
+            } else {
+                // Default values for new availability
+                setAvailabilityData({
+                    weekday_available: false,
+                    weekday_start: '09:00',
+                    weekday_end: '17:00',
+                    weekend_available: false,
+                    weekend_start: '10:00',
+                    weekend_end: '14:00'
+                });
+            }
         } catch (error) {
-            console.error("Failed to delete slot:", error);
-            alert("Failed to delete slot.");
+            console.error("Failed to fetch availability:", error);
+            setAvailabilityData({
+                weekday_available: false,
+                weekday_start: '09:00',
+                weekday_end: '17:00',
+                weekend_available: false,
+                weekend_start: '10:00',
+                weekend_end: '14:00'
+            });
         }
     };
 
-    const handleDateToggle = (date) => {
-        setSlotFormData(prev => {
-            const dates = prev.dates.includes(date)
-                ? prev.dates.filter(d => d !== date)
-                : [...prev.dates, date];
-            return { ...prev, dates };
-        });
-    };
-
-    // Generate next 7 days for date picker
-    const getNextDays = (count = 7) => {
-        const days = [];
-        const today = new Date();
-        for (let i = 0; i < count; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            days.push(date.toISOString().split('T')[0]);
+    const handleSaveAvailability = async () => {
+        if (!selectedTeacher) return;
+        
+        setSavingAvailability(true);
+        try {
+            await updateTeacherAvailability(selectedTeacher.id, availabilityData);
+            alert('Availability saved successfully!');
+            setIsTimeSlotModalOpen(false);
+        } catch (error) {
+            console.error("Failed to save availability:", error);
+            alert('Failed to save availability. ' + (error.message || ''));
+        } finally {
+            setSavingAvailability(false);
         }
-        return days;
     };
 
     // Derived Stats
@@ -328,12 +298,12 @@ export default function Teachers() {
                                                 </button>
                                                 
                                                 <button 
-                                                    onClick={() => handleManageTimeSlots(teacher)}
+                                                    onClick={() => handleManageAvailability(teacher)}
                                                     className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
-                                                    title="Manage Time Slots"
+                                                    title="Set Availability"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">schedule</span>
-                                                    Schedule
+                                                    Availability
                                                 </button>
                                                 
                                                 <button 
@@ -457,206 +427,153 @@ export default function Teachers() {
             {/* Time Slot Management Modal */}
             {isTimeSlotModalOpen && selectedTeacher && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 border border-white/20">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-blue-50 to-indigo-50">
-                            <div>
-                                <h3 className="font-bold text-xl text-[#120f1a] flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-blue-600">schedule</span>
-                                    Time Slot Management
-                                </h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    Manage availability for <span className="font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">{selectedTeacher.full_name}</span>
-                                </p>
-                            </div>
-                            <button 
-                                onClick={() => setIsTimeSlotModalOpen(false)} 
-                                className="text-slate-400 hover:text-slate-600 rounded-full p-2 hover:bg-slate-100 transition-colors"
-                            >
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-                        
-                        <div className="p-6 flex-1 overflow-y-auto">
-                            {/* Create Slots Section */}
-                            <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-                                <h4 className="font-bold text-sm uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-lg">add_circle</span>
-                                    Create New Time Slots
-                                </h4>
-                                
-                                {/* Date Selection */}
-                                <div className="mb-4">
-                                    <label className="block text-xs font-bold text-slate-600 mb-2">Select Dates</label>
-                                    <div className="grid grid-cols-7 gap-2">
-                                        {getNextDays(14).map(date => {
-                                            const dateObj = new Date(date);
-                                            const isSelected = slotFormData.dates.includes(date);
-                                            return (
-                                                <button
-                                                    key={date}
-                                                    onClick={() => handleDateToggle(date)}
-                                                    className={`p-2 rounded-lg text-xs font-bold transition-all ${
-                                                        isSelected 
-                                                        ? 'bg-blue-600 text-white shadow-md' 
-                                                        : 'bg-white text-slate-600 hover:bg-blue-100 border border-slate-200'
-                                                    }`}
-                                                >
-                                                    <div className="text-[10px] opacity-70">{dateObj.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                                                    <div>{dateObj.getDate()}</div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    {slotFormData.dates.length > 0 && (
-                                        <p className="text-xs text-blue-600 mt-2 font-medium">
-                                            {slotFormData.dates.length} date{slotFormData.dates.length > 1 ? 's' : ''} selected
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Time Range */}
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-600 mb-2">Start Time</label>
-                                        <input
-                                            type="time"
-                                            value={slotFormData.startTime}
-                                            onChange={(e) => setSlotFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-600 mb-2">End Time</label>
-                                        <input
-                                            type="time"
-                                            value={slotFormData.endTime}
-                                            onChange={(e) => setSlotFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Info Box */}
-                                <div className="bg-blue-100 border border-blue-200 rounded-xl p-3 mb-4">
-                                    <p className="text-xs text-blue-700 flex items-start gap-2">
-                                        <span className="material-symbols-outlined text-sm mt-0.5">info</span>
-                                        <span>
-                                            Slots will be created in <strong>1-hour intervals</strong>. 
-                                            Example: 08:00-12:00 creates 4 slots: 08-09, 09-10, 10-11, 11-12
-                                        </span>
+                        <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-xl text-[#120f1a] flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-blue-600">schedule</span>
+                                        Set Availability
+                                    </h3>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        <span className="font-bold text-blue-600">{selectedTeacher.full_name}</span>
                                     </p>
                                 </div>
-
-                                {/* Create Button */}
-                                <button
-                                    onClick={handleCreateTimeSlots}
-                                    disabled={creatingSlots || slotFormData.dates.length === 0}
-                                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                                <button 
+                                    onClick={() => setIsTimeSlotModalOpen(false)} 
+                                    className="text-slate-400 hover:text-slate-600 rounded-full p-2 hover:bg-slate-100 transition-colors"
                                 >
-                                    {creatingSlots ? (
-                                        <>
-                                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                            Creating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="material-symbols-outlined">add_circle</span>
-                                            Create Time Slots
-                                        </>
-                                    )}
+                                    <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
-
-                            {/* Existing Slots List */}
-                            <div>
+                        </div>
+                        
+                        <div className="p-6 space-y-6">
+                            {/* Weekday Availability */}
+                            <div className={`p-5 rounded-xl border-2 transition-all ${
+                                availabilityData.weekday_available 
+                                    ? 'bg-green-50 border-green-200' 
+                                    : 'bg-gray-50 border-gray-200'
+                            }`}>
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-bold text-sm text-slate-700 flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-slate-500">event_available</span>
-                                        Existing Time Slots
-                                    </h4>
-                                    <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">
-                                        {teacherSlots.length} slots
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-10 rounded-full flex items-center justify-center ${
+                                            availabilityData.weekday_available ? 'bg-green-100' : 'bg-gray-200'
+                                        }`}>
+                                            <span className="material-symbols-outlined text-green-600">work</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-800">Weekdays</h4>
+                                            <p className="text-xs text-gray-500">Monday - Friday</p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="sr-only peer"
+                                            checked={availabilityData.weekday_available}
+                                            onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekday_available: e.target.checked }))}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                    </label>
                                 </div>
                                 
-                                {teacherSlots.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-                                        <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                                            <span className="material-symbols-outlined text-slate-300 text-3xl">event_busy</span>
+                                {availabilityData.weekday_available && (
+                                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-green-200">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-2">Start Time</label>
+                                            <input
+                                                type="time"
+                                                value={availabilityData.weekday_start}
+                                                onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekday_start: e.target.value }))}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-green-200 bg-white text-sm font-medium focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+                                            />
                                         </div>
-                                        <p className="text-slate-400 font-medium text-sm">No time slots created yet.</p>
-                                        <p className="text-slate-400 text-xs mt-1">Create your first slot above</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                                        {/* Group slots by date */}
-                                        {Object.entries(
-                                            teacherSlots.reduce((acc, slot) => {
-                                                const date = slot.slot_date;
-                                                if (!acc[date]) acc[date] = [];
-                                                acc[date].push(slot);
-                                                return acc;
-                                            }, {})
-                                        ).map(([date, slots]) => (
-                                            <div key={date} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                                                <div className="bg-slate-50 px-4 py-2 border-b border-slate-100">
-                                                    <p className="text-xs font-bold text-slate-600">
-                                                        {new Date(date).toLocaleDateString('en-US', { 
-                                                            weekday: 'long', 
-                                                            year: 'numeric', 
-                                                            month: 'long', 
-                                                            day: 'numeric' 
-                                                        })}
-                                                    </p>
-                                                </div>
-                                                <div className="p-2 space-y-1">
-                                                    {slots.sort((a, b) => a.slot_start.localeCompare(b.slot_start)).map(slot => (
-                                                        <div 
-                                                            key={slot.id} 
-                                                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors group"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`size-10 rounded-lg flex items-center justify-center ${
-                                                                    slot.status === 'available' ? 'bg-green-50 text-green-600' :
-                                                                    slot.status === 'booked' ? 'bg-blue-50 text-blue-600' :
-                                                                    'bg-slate-100 text-slate-500'
-                                                                }`}>
-                                                                    <span className="material-symbols-outlined text-lg">
-                                                                        {slot.status === 'available' ? 'check_circle' : 
-                                                                         slot.status === 'booked' ? 'event_available' : 'block'}
-                                                                    </span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-bold text-sm text-slate-700">
-                                                                        {slot.slot_start.substring(0, 5)} - {slot.slot_end.substring(0, 5)}
-                                                                    </p>
-                                                                    <p className={`text-xs font-medium ${
-                                                                        slot.status === 'available' ? 'text-green-600' :
-                                                                        slot.status === 'booked' ? 'text-blue-600' :
-                                                                        'text-slate-500'
-                                                                    }`}>
-                                                                        {slot.status.charAt(0).toUpperCase() + slot.status.slice(1)}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            {slot.status === 'available' && (
-                                                                <button
-                                                                    onClick={() => handleDeleteSlot(slot.id)}
-                                                                    className="size-8 flex items-center justify-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100"
-                                                                    title="Delete Slot"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-2">End Time</label>
+                                            <input
+                                                type="time"
+                                                value={availabilityData.weekday_end}
+                                                onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekday_end: e.target.value }))}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-green-200 bg-white text-sm font-medium focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Weekend Availability */}
+                            <div className={`p-5 rounded-xl border-2 transition-all ${
+                                availabilityData.weekend_available 
+                                    ? 'bg-purple-50 border-purple-200' 
+                                    : 'bg-gray-50 border-gray-200'
+                            }`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-10 rounded-full flex items-center justify-center ${
+                                            availabilityData.weekend_available ? 'bg-purple-100' : 'bg-gray-200'
+                                        }`}>
+                                            <span className="material-symbols-outlined text-purple-600">weekend</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-800">Weekends</h4>
+                                            <p className="text-xs text-gray-500">Saturday - Sunday</p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="sr-only peer"
+                                            checked={availabilityData.weekend_available}
+                                            onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekend_available: e.target.checked }))}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                                    </label>
+                                </div>
+                                
+                                {availabilityData.weekend_available && (
+                                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-purple-200">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-2">Start Time</label>
+                                            <input
+                                                type="time"
+                                                value={availabilityData.weekend_start}
+                                                onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekend_start: e.target.value }))}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-purple-200 bg-white text-sm font-medium focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-2">End Time</label>
+                                            <input
+                                                type="time"
+                                                value={availabilityData.weekend_end}
+                                                onChange={(e) => setAvailabilityData(prev => ({ ...prev, weekend_end: e.target.value }))}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-purple-200 bg-white text-sm font-medium focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Save Button */}
+                            <button
+                                onClick={handleSaveAvailability}
+                                disabled={savingAvailability}
+                                className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                            >
+                                {savingAvailability ? (
+                                    <>
+                                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined">check_circle</span>
+                                        Save Availability
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

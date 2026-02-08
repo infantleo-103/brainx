@@ -33,7 +33,7 @@ async def assign_teacher_to_course(
 async def remove_teacher_from_course(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    id: int,
+    id: UUID,
     # current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
@@ -63,7 +63,7 @@ async def read_courses_by_teacher(
 async def read_teachers_by_course(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    course_id: int,
+    course_id: UUID,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:

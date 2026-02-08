@@ -7,7 +7,7 @@ from app.models.teacher_course import TeacherCourse
 from app.schemas.teacher_course import TeacherCourseCreate
 
 class CRUDTeacherCourse:
-    async def get(self, db: AsyncSession, id: int) -> Optional[TeacherCourse]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[TeacherCourse]:
         result = await db.execute(
             select(TeacherCourse)
             .options(joinedload(TeacherCourse.teacher))
@@ -15,9 +15,10 @@ class CRUDTeacherCourse:
         )
         return result.scalars().first()
 
-    async def get_by_teacher_and_course(self, db: AsyncSession, *, teacher_id: UUID, course_id: int) -> Optional[TeacherCourse]:
+    async def get_by_teacher_and_course(self, db: AsyncSession, *, teacher_id: UUID, course_id: UUID) -> Optional[TeacherCourse]:
         result = await db.execute(
             select(TeacherCourse)
+            .options(joinedload(TeacherCourse.teacher))
             .filter(TeacherCourse.teacher_id == teacher_id, TeacherCourse.course_id == course_id)
         )
         return result.scalars().first()
@@ -30,9 +31,15 @@ class CRUDTeacherCourse:
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
-        return db_obj
+        # Re-query with joinedload to eagerly load the teacher relationship
+        result = await db.execute(
+            select(TeacherCourse)
+            .options(joinedload(TeacherCourse.teacher))
+            .filter(TeacherCourse.id == db_obj.id)
+        )
+        return result.scalars().first()
 
-    async def remove(self, db: AsyncSession, *, id: int) -> TeacherCourse:
+    async def remove(self, db: AsyncSession, *, id: UUID) -> TeacherCourse:
         result = await db.execute(select(TeacherCourse).filter(TeacherCourse.id == id))
         obj = result.scalars().first()
         await db.delete(obj)
@@ -47,7 +54,7 @@ class CRUDTeacherCourse:
         )
         return result.scalars().all()
 
-    async def get_by_course(self, db: AsyncSession, *, course_id: int, skip: int = 0, limit: int = 100) -> List[TeacherCourse]:
+    async def get_by_course(self, db: AsyncSession, *, course_id: UUID, skip: int = 0, limit: int = 100) -> List[TeacherCourse]:
         result = await db.execute(
             select(TeacherCourse)
             .options(joinedload(TeacherCourse.teacher))

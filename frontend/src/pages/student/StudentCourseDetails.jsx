@@ -13,7 +13,7 @@ export default function StudentCourseDetails() {
             {/* Header */}
             <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-20">
                 <div className="flex items-center gap-3 text-sm">
-                    <Link to="/student/my-courses" className="text-gray-500 hover:text-primary transition-colors">My Courses</Link>
+                    <Link to="/student/my-courses" className="text-gray-500 hover:text-primary transition-colors">My Class</Link>
                     <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
                     <span className="font-bold text-gray-900 truncate max-w-[200px] md:max-w-md">{courseTitle}</span>
                 </div>

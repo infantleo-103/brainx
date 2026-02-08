@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import logo from '../assets/logo.png'; // Keeping logo if used elsewhere
 import Header from '../components/Header';
-import { getCourse, getTeachersByCourse, getTeacherTimeSlots, enrollInCourse, checkEnrollmentStatus } from '../services/api';
+import { getCourse, getTeachersByCourse, getTeacherAvailability, enrollInCourse, checkEnrollmentStatus } from '../services/api';
 
 import { features } from '../mock/courseDetailsData'; // Keep features mock for now
 
@@ -14,7 +14,7 @@ export default function CourseDetails() {
     const [course, setCourse] = React.useState(null);
     const [teachers, setTeachers] = React.useState([]);
     const [selectedTeacherId, setSelectedTeacherId] = React.useState(null);
-    const [timeSlots, setTimeSlots] = React.useState([]);
+    const [teacherAvailability, setTeacherAvailability] = React.useState(null);
     const [loadingSlots, setLoadingSlots] = React.useState(false);
     const [timeFilter, setTimeFilter] = React.useState('All');
     const [selectedSlotId, setSelectedSlotId] = React.useState(null);
@@ -44,7 +44,7 @@ export default function CourseDetails() {
             // Auto-select first teacher if available
             if (teachersData.length > 0 && teachersData[0].teacher) {
                 setSelectedTeacherId(teachersData[0].teacher.id);
-                fetchTimeSlots(teachersData[0].teacher.id);
+                fetchAvailability(teachersData[0].teacher.id);
             }
         } catch (error) {
             console.error("Failed to fetch course details:", error);
@@ -53,16 +53,14 @@ export default function CourseDetails() {
         }
     };
 
-    const fetchTimeSlots = async (teacherId) => {
+    const fetchAvailability = async (teacherId) => {
         try {
             setLoadingSlots(true);
-            // Date filtering removed from backend
-
-            const slots = await getTeacherTimeSlots(teacherId);
-            setTimeSlots(slots);
+            const availability = await getTeacherAvailability(teacherId);
+            setTeacherAvailability(availability);
         } catch (error) {
-            console.error("Failed to fetch time slots:", error);
-            setTimeSlots([]);
+            console.error("Failed to fetch availability:", error);
+            setTeacherAvailability(null);
         } finally {
             setLoadingSlots(false);
         }
@@ -95,9 +93,58 @@ export default function CourseDetails() {
         return 'Evening';
     };
 
+    // Generate hourly slots from availability range
+    const generateHourlySlots = (availability) => {
+        if (!availability) return [];
+        
+        const slots = [];
+        
+        // Generate weekday slots
+        if (availability.weekday_available && availability.weekday_start && availability.weekday_end) {
+            const startHour = parseInt(availability.weekday_start.substring(0, 2));
+            const endHour = parseInt(availability.weekday_end.substring(0, 2));
+            
+            for (let hour = startHour; hour < endHour; hour++) {
+                const startTime = `${hour.toString().padStart(2, '0')}:00`;
+                const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+                slots.push({
+                    id: `weekday-${hour}`,
+                    type: 'weekday',
+                    startTime,
+                    endTime,
+                    label: 'Mon-Fri'
+                });
+            }
+        }
+        
+        // Generate weekend slots
+        if (availability.weekend_available && availability.weekend_start && availability.weekend_end) {
+            const startHour = parseInt(availability.weekend_start.substring(0, 2));
+            const endHour = parseInt(availability.weekend_end.substring(0, 2));
+            
+            for (let hour = startHour; hour < endHour; hour++) {
+                const startTime = `${hour.toString().padStart(2, '0')}:00`;
+                const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+                slots.push({
+                    id: `weekend-${hour}`,
+                    type: 'weekend',
+                    startTime,
+                    endTime,
+                    label: 'Sat-Sun'
+                });
+            }
+        }
+        
+        return slots;
+    };
+
+    // Get generated slots
+    const hourlySlots = generateHourlySlots(teacherAvailability);
+
     const handleTeacherSelect = (teacherId) => {
         setSelectedTeacherId(teacherId);
-        fetchTimeSlots(teacherId);
+        setSelectedSlotId(null); // Reset slot selection when changing teacher
+        fetchAvailability(teacherId);
     };
 
     if (loading) {
@@ -120,6 +167,14 @@ export default function CourseDetails() {
     }
 
     const handleEnroll = async () => {
+        // Check if user has a pending (requested) status from signup
+        const userStatus = localStorage.getItem('user_status');
+        if (userStatus === 'requested') {
+            // Show popup for pending users
+            alert('Our Administrator will connect with you soon. Please wait for your account to be approved.');
+            return;
+        }
+
         if (!isLoggedIn) {
             // Redirect to signup with return path to this course
             navigate('/signup', {
@@ -133,9 +188,9 @@ export default function CourseDetails() {
             setEnrolling(true);
             try {
                 const enrollmentData = {
-                    course_id: parseInt(id),
+                    course_id: id,  // UUID string, not int
                     teacher_id: selectedTeacherId,
-                    slot_id: selectedSlotId
+                    preferred_time: selectedSlotId  // e.g., "weekday-9" or "weekend-10"
                 };
 
                 const result = await enrollInCourse(enrollmentData);
@@ -303,7 +358,7 @@ export default function CourseDetails() {
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                                         Loading available slots...
                                     </div>
-                                ) : timeSlots.length === 0 ? (
+                                ) : hourlySlots.length === 0 ? (
                                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200 m-4">
                                         <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">event_busy</span>
                                         <p>No available slots for the selected instructor.</p>
@@ -312,67 +367,89 @@ export default function CourseDetails() {
                                     <>
                                         <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                             <div className="col-span-3">Time Period</div>
-                                            <div className="col-span-6">Time Slot</div>
-                                            <div className="col-span-3 text-center">Select</div>
+                                            <div className="col-span-4">Time Slot</div>
+                                            <div className="col-span-3">Days</div>
+                                            <div className="col-span-2 text-center">Select</div>
                                         </div>
-                                        {timeSlots
-                                            .filter(slot => slot.status === 'available')
-                                            .filter(slot => {
-                                                if (timeFilter === 'All') return true;
-                                                return getTimePeriod(slot.slot_start) === timeFilter;
-                                            })
-                                            .map((slot, index) => {
-                                                const timePeriod = getTimePeriod(slot.slot_start);
-                                                const startTime12 = formatTime12Hour(slot.slot_start);
-                                                const endTime12 = formatTime12Hour(slot.slot_end);
-                                                const timeRange = `${startTime12} - ${endTime12}`;
+                                        <div className="max-h-[400px] overflow-y-auto">
+                                            {hourlySlots
+                                                .filter(slot => {
+                                                    if (timeFilter === 'All') return true;
+                                                    return getTimePeriod(slot.startTime) === timeFilter;
+                                                })
+                                                .map((slot) => {
+                                                    const timePeriod = getTimePeriod(slot.startTime);
+                                                    const startTime12 = formatTime12Hour(slot.startTime);
+                                                    const endTime12 = formatTime12Hour(slot.endTime);
+                                                    const timeRange = `${startTime12} - ${endTime12}`;
+                                                    const isWeekend = slot.type === 'weekend';
 
-                                                const periodConfig = {
-                                                    'Morning': { icon: 'wb_sunny', color: 'bg-amber-50 text-amber-600', iconColor: 'text-amber-600' },
-                                                    'Afternoon': { icon: 'wb_twilight', color: 'bg-orange-50 text-orange-600', iconColor: 'text-orange-600' },
-                                                    'Evening': { icon: 'nights_stay', color: 'bg-indigo-50 text-indigo-600', iconColor: 'text-indigo-600' }
-                                                };
-                                                const config = periodConfig[timePeriod];
+                                                    const periodConfig = {
+                                                        'Morning': { icon: 'wb_sunny', color: 'bg-amber-50 text-amber-600', iconColor: 'text-amber-600' },
+                                                        'Afternoon': { icon: 'wb_twilight', color: 'bg-orange-50 text-orange-600', iconColor: 'text-orange-600' },
+                                                        'Evening': { icon: 'nights_stay', color: 'bg-indigo-50 text-indigo-600', iconColor: 'text-indigo-600' }
+                                                    };
+                                                    const config = periodConfig[timePeriod];
 
-                                                return (
-                                                    <label key={slot.id} className="block cursor-pointer group border-b border-gray-100 last:border-0">
-                                                        <input
-                                                            checked={selectedSlotId === slot.id}
-                                                            onChange={() => setSelectedSlotId(slot.id)}
-                                                            className="peer sr-only"
-                                                            name="timeslot"
-                                                            type="radio"
-                                                        />
-                                                        <div className={`card-selection p-4 md:p-5 transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-gray-50 ${selectedSlotId === slot.id ? 'bg-primary/5' : ''}`}>
-                                                            <div className="md:hidden flex justify-between items-center w-full mb-2">
-                                                                <span className="text-xs font-bold text-gray-400 uppercase">{timePeriod}</span>
-                                                                <div className={`radio-ring size-5 rounded-full border-2 flex items-center justify-center transition-colors bg-white ${selectedSlotId === slot.id ? 'border-primary' : 'border-gray-300 group-hover:border-primary'}`}>
-                                                                    <div className={`radio-dot size-2.5 bg-primary rounded-full transition-all ${selectedSlotId === slot.id ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="md:col-span-3">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={`hidden md:flex size-10 rounded-lg ${config.color} items-center justify-center shrink-0`}>
-                                                                        <span className={`material-symbols-outlined text-[20px] ${config.iconColor}`}>{config.icon}</span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="font-bold text-[#120f1a] text-sm md:text-base">{timePeriod}</h4>
+                                                    return (
+                                                        <label key={slot.id} className="block cursor-pointer group border-b border-gray-100 last:border-0">
+                                                            <input
+                                                                checked={selectedSlotId === slot.id}
+                                                                onChange={() => setSelectedSlotId(slot.id)}
+                                                                className="peer sr-only"
+                                                                name="timeslot"
+                                                                type="radio"
+                                                            />
+                                                            <div className={`card-selection p-4 md:p-5 transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-gray-50 ${selectedSlotId === slot.id ? 'bg-primary/5' : ''}`}>
+                                                                {/* Mobile header */}
+                                                                <div className="md:hidden flex justify-between items-center w-full mb-2">
+                                                                    <span className="text-xs font-bold text-gray-400 uppercase">{timePeriod}</span>
+                                                                    <div className={`radio-ring size-5 rounded-full border-2 flex items-center justify-center transition-colors bg-white ${selectedSlotId === slot.id ? 'border-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                                                        <div className={`radio-dot size-2.5 bg-primary rounded-full transition-all ${selectedSlotId === slot.id ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="md:col-span-6 flex md:block items-center justify-between">
-                                                                <span className="md:hidden text-xs text-gray-500 font-medium">Time:</span>
-                                                                <div className="text-sm md:text-base font-bold text-gray-700">{timeRange}</div>
-                                                            </div>
-                                                            <div className="hidden md:flex col-span-3 justify-center">
-                                                                <div className={`radio-ring size-5 rounded-full border-2 flex items-center justify-center transition-colors bg-white ${selectedSlotId === slot.id ? 'border-primary' : 'border-gray-300 group-hover:border-primary'}`}>
-                                                                    <div className={`radio-dot size-2.5 bg-primary rounded-full transition-all ${selectedSlotId === slot.id ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
+                                                                
+                                                                {/* Time Period */}
+                                                                <div className="md:col-span-3">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className={`hidden md:flex size-10 rounded-lg ${config.color} items-center justify-center shrink-0`}>
+                                                                            <span className={`material-symbols-outlined text-[20px] ${config.iconColor}`}>{config.icon}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="font-bold text-[#120f1a] text-sm md:text-base">{timePeriod}</h4>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Time Range */}
+                                                                <div className="md:col-span-4 flex md:block items-center justify-between">
+                                                                    <span className="md:hidden text-xs text-gray-500 font-medium">Time:</span>
+                                                                    <div className="text-sm md:text-base font-bold text-gray-700">{timeRange}</div>
+                                                                </div>
+                                                                
+                                                                {/* Day Type */}
+                                                                <div className="md:col-span-3">
+                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                                                                        isWeekend 
+                                                                            ? 'bg-purple-100 text-purple-700' 
+                                                                            : 'bg-green-100 text-green-700'
+                                                                    }`}>
+                                                                        <span className="material-symbols-outlined text-sm">{isWeekend ? 'weekend' : 'work'}</span>
+                                                                        {slot.label}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                {/* Select Radio */}
+                                                                <div className="hidden md:flex col-span-2 justify-center">
+                                                                    <div className={`radio-ring size-5 rounded-full border-2 flex items-center justify-center transition-colors bg-white ${selectedSlotId === slot.id ? 'border-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                                                        <div className={`radio-dot size-2.5 bg-primary rounded-full transition-all ${selectedSlotId === slot.id ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </label>
-                                                );
-                                            })}
+                                                        </label>
+                                                    );
+                                                })}
+                                        </div>
                                     </>
                                 )}
                             </div>

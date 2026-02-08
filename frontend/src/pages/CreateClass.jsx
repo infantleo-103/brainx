@@ -67,8 +67,8 @@ export default function CreateClass() {
         try {
             const payload = {
                 ...formData,
-                course_id: parseInt(formData.course_id),
-                teacher_id: formData.teacher_id || null, // UUID should not be parsed as int
+                course_id: formData.course_id || null,
+                teacher_id: formData.teacher_id || null,
                 start_date: formData.start_date || null,
                 end_date: formData.end_date || null,
                 total_hours: formData.total_hours ? parseInt(formData.total_hours) : 0,
@@ -124,7 +124,7 @@ export default function CreateClass() {
 
     const handleMemberRoleChange = (memberId, newRoleId) => {
         setMembers(members.map(m =>
-            m.id === memberId ? { ...m, role_id: parseInt(newRoleId) } : m
+            m.id === memberId ? { ...m, role_id: newRoleId } : m
         ));
     };
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { signup, login } from '../services/api';
+import { signup } from '../services/api';
 
 export default function Signup() {
     const navigate = useNavigate();
@@ -36,37 +36,25 @@ export default function Signup() {
         setLoading(true);
         try {
             // Prepare payload matching backend schema
+            // Note: status defaults to 'requested' on backend - pending admin approval
             const payload = {
                 full_name: formData.full_name,
                 email: formData.email,
                 phone: formData.phone,
                 role: formData.role.toLowerCase(), // Ensure lowercase for enum
-                status: 'active',
                 password: formData.password
             };
 
-            // Step 1: Create the account
+            // Create the account (no auto-login - requires admin approval)
             await signup(payload);
             
-            // Step 2: Automatically log the user in
-            const loginData = await login({
-                email: formData.email,
-                password: formData.password
-            });
+            // Store pending status in localStorage so we can show appropriate messages
+            localStorage.setItem('user_status', 'requested');
+            localStorage.setItem('pending_email', formData.email);
             
-            // Step 3: Store the access token
-            if (loginData.access_token) {
-                localStorage.setItem('access_token', loginData.access_token);
-                alert("Account created and logged in successfully!");
-                
-                // Navigate to return path if provided, otherwise go to dashboard
-                const returnTo = location.state?.returnTo;
-                if (returnTo) {
-                    navigate(returnTo);
-                } else {
-                    navigate('/student/dashboard');
-                }
-            }
+            // Show success message and redirect to login
+            alert("Account created successfully! Please wait for admin approval before logging in.");
+            navigate('/login');
         } catch (err) {
             setError(err.message);
         } finally {

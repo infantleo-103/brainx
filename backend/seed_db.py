@@ -60,6 +60,28 @@ async def get_or_create_category(session, name, **kwargs):
     return category
 
 
+async def get_or_create_role(session, name, description=None, permissions_data=None):
+    result = await session.execute(select(Role).where(Role.name == name))
+    role = result.scalars().first()
+    if not role:
+        role = Role(name=name, description=description)
+        session.add(role)
+        # Flush to get role.id
+        await session.flush()
+        logger.info(f"Creating role: {name}")
+        
+        if permissions_data:
+            for perm_data in permissions_data:
+                perm = Permission(role_id=role.id, **perm_data)
+                session.add(perm)
+            logger.info(f"Added keys permissions for role: {name}")
+            
+        await session.commit()
+        await session.refresh(role)
+    else:
+        logger.info(f"Role already exists: {name}")
+    return role
+
 
 async def seed_data():
     async with AsyncSessionLocal() as session:
@@ -71,6 +93,61 @@ async def seed_data():
         # Create Categories
         cat1 = await get_or_create_category(session, "Programming", description="Coding and Software Development")
         cat2 = await get_or_create_category(session, "Data Science", description="Analytics and ML")
+
+        # Create Roles and Permissions
+        modules = ['Dashboard', 'Courses', 'Reports', 'Messages', 'Student Records', 'User Management', 'Global Settings']
+        
+        # Admin Permissions (Full Access)
+        admin_perms = [
+            {'module': m, 'can_view': True, 'can_create': True, 'can_edit': True, 'can_delete': True} 
+            for m in modules
+        ]
+        await get_or_create_role(session, "admin", "Administrator with full access", admin_perms)
+        
+        # Teacher Permissions
+        teacher_modules_view = ['Dashboard', 'Courses', 'Messages', 'Student Records']
+        teacher_perms = []
+        for m in modules:
+            is_allowed = m in teacher_modules_view
+            teacher_perms.append({
+                'module': m,
+                'can_view': is_allowed,
+                'can_create': is_allowed and m != 'Dashboard',
+                'can_edit': is_allowed and m != 'Dashboard',
+                'can_delete': False
+            })
+        await get_or_create_role(session, "teacher", "Teacher with course management access", teacher_perms)
+
+        # Student Permissions
+        student_modules = ['Dashboard', 'Courses', 'Messages']
+        student_perms = []
+        for m in modules:
+            is_allowed = m in student_modules
+            student_perms.append({
+                'module': m,
+                'can_view': is_allowed,
+                'can_create': False,
+                'can_edit': False,
+                'can_delete': False
+            })
+        await get_or_create_role(session, "student", "Student with view access", student_perms)
+
+        # Parent Permissions
+        parent_modules = ['Dashboard', 'Messages']
+        parent_perms = []
+        for m in modules:
+             is_allowed = m in parent_modules
+             parent_perms.append({
+                'module': m,
+                'can_view': is_allowed,
+                'can_create': False,
+                'can_edit': False,
+                'can_delete': False
+            })
+        await get_or_create_role(session, "parent", "Parent with view access", parent_perms)
+        
+        await get_or_create_role(session, "coordinator", "Coordinator role")
+        await get_or_create_role(session, "counselor", "Counselor role")
         
         # Create Users
         password = get_password_hash("password123")

@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     role: UserRole
-    status: UserStatus = UserStatus.active
+    status: UserStatus = UserStatus.requested  # New users require admin approval
     profile_image: Optional[str] = None
 
 class UserCreate(UserBase):

@@ -45,11 +45,13 @@ async def read_chats(
     chats = await crud_chat.get_by_user(db=db, user_id=current_user.id, skip=skip, limit=limit)
     return chats
 
+from uuid import UUID
+
 @router.get("/{chat_id}", response_model=schemas.Chat)
 async def read_chat(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    chat_id: int,
+    chat_id: UUID,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
@@ -68,7 +70,7 @@ async def read_chat(
 async def create_message(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    chat_id: int,
+    chat_id: UUID,
     message_in: schemas.MessageCreate,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
@@ -90,7 +92,7 @@ async def create_message(
 async def read_messages(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    chat_id: int,
+    chat_id: UUID,
     skip: int = 0,
     limit: int = 50,
     current_user: User = Depends(deps.get_current_user),
@@ -105,8 +107,8 @@ async def read_messages(
 async def mark_message_read(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    chat_id: int,
-    message_id: int,
+    chat_id: UUID,
+    message_id: UUID,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
@@ -130,7 +132,7 @@ async def mark_message_read(
 @router.websocket("/{chat_id}/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    chat_id: int,
+    chat_id: UUID,
     db: AsyncSession = Depends(deps.get_db),
     # token: str = Query(...) # In real app, validate token here for auth
 ):
@@ -191,7 +193,7 @@ async def websocket_endpoint(
 
 @router.post("/{chat_id}/resources", response_model=schemas.ChatResource)
 async def upload_resource(
-    chat_id: int,
+    chat_id: UUID,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),

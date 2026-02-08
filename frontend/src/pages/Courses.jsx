@@ -158,8 +158,8 @@ export default function Courses() {
 
     const handleMemberRoleChange = (index, newRoleId) => {
         const updatedMembers = [...selectedBatchMembers];
-        updatedMembers[index].role_id = parseInt(newRoleId);
-        updatedMembers[index].role = availableRoles.find(r => r.id === parseInt(newRoleId))?.name;
+        updatedMembers[index].role_id = newRoleId;
+        updatedMembers[index].role = availableRoles.find(r => r.id === newRoleId)?.name;
         setSelectedBatchMembers(updatedMembers);
     };
 
@@ -180,7 +180,7 @@ export default function Courses() {
 
             const payload = {
                 ...editFormData,
-                course_id: parseInt(editFormData.course_id),
+                course_id: editFormData.course_id,
                 total_hours: editFormData.total_hours ? parseInt(editFormData.total_hours) : 0,
                 members: membersPayload
             };
@@ -340,7 +340,6 @@ export default function Courses() {
                                                     className="bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400 uppercase border-b border-slate-100 dark:border-slate-800">
                                                     <th className="px-6 py-4 min-w-[200px]">Course Name</th>
                                                     <th className="px-6 py-4">Category</th>
-                                                    <th className="px-6 py-4">Assigned Teacher</th>
                                                     <th className="px-6 py-4 text-center">Enrolled</th>
                                                     <th className="px-6 py-4">Status</th>
                                                     <th className="px-6 py-4 text-right">Actions</th>
@@ -385,14 +384,6 @@ export default function Courses() {
                                                                     className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                                                                     {categories[course.category_id] || 'Uncategorized'}
                                                                 </span>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="size-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500">
-                                                                        TBD
-                                                                    </div>
-                                                                    <span className="text-sm text-slate-600 dark:text-slate-300">Unassigned</span>
-                                                                </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-center">
                                                                 <span
@@ -578,37 +569,6 @@ export default function Courses() {
                                 </div>
                             </>
                         )}
-                    </div>
-                    <div className="xl:col-span-1 space-y-4">
-                        <div className="flex items-center justify-between px-1">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Course Approvals</h3>
-                            <span
-                                className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold px-2 py-1 rounded-full">3
-                                Pending</span>
-                        </div>
-                        <div className="space-y-4">
-                            <div
-                                className="bg-white dark:bg-[#15202b] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-3">
-                                    <span className="size-2 rounded-full bg-red-500 block"></span>
-                                </div>
-                                <h4 className="font-bold text-slate-900 dark:text-white pr-4">Machine Learning Basics</h4>
-                                <div className="flex items-center gap-2 mt-2 mb-4">
-                                    <div className="size-6 rounded-full bg-slate-200 dark:bg-slate-700 block"></div>
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">Submitted by Mr.
-                                        Anderson</span>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">A foundational
-                                    course covering supervised and unsupervised learning algorithms with Python examples.
-                                </p>
-                                <div className="flex gap-2">
-                                    <button
-                                        className="flex-1 py-2 text-xs font-semibold bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">Approve</button>
-                                    <button
-                                        className="flex-1 py-2 text-xs font-semibold bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">Reject</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

@@ -62,13 +62,13 @@ export default function Sidebar({ active }) {
     // Generic nav items (for Admin/Teacher/etc)
     const genericNavItems = [
         { key: 'chat', label: 'Chat', icon: 'chat_bubble', link: '/chat', iconClass: 'fill-1', module: 'Messages' },
-        { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', link: '/dashboard', iconClass: 'fill-1', module: 'Dashboard' },
+        { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', link: '/admin/dashboard', iconClass: 'fill-1', module: 'Dashboard' },
         { key: 'reports', label: 'Reports', icon: 'group', link: '#', module: 'Reports' },
-        { key: 'parents', label: 'Parents', icon: 'face_3', link: '#', module: 'Student Records' },
-        { key: 'teachers', label: 'Teachers', icon: 'work', link: '/teachers', module: 'User Management' },
+        { key: 'parents', label: 'Parents', icon: 'face_3', link: '/admin/parents', module: 'Student Records' },
+        { key: 'teachers', label: 'Teacher Management', icon: 'school', link: '/admin/teachers', module: 'User Management' },
         { key: 'courses', label: 'Courses', icon: 'book_2', link: '/courses', module: 'Courses' },
         { key: 'assessment', label: 'Assessment', icon: 'assignment', link: '/assessment' },
-        { key: 'management', label: 'Management', icon: 'settings', link: '#', module: 'User Management' },
+        { key: 'user management', label: 'User Management', icon: 'settings', link: '/admin/users', module: 'User Management' },
         { key: 'roles', label: 'Roles & Access', icon: 'verified_user', link: '/roles', module: 'Global Settings' }
     ];
 
@@ -145,7 +145,7 @@ export default function Sidebar({ active }) {
                         </Link>
                         <Link to="/student/my-courses" className={`sidebar-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all group ${isActive('/student/my-courses') ? 'bg-primary-light text-primary border-r-[3px] border-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}>
                             <span className={`material-symbols-outlined text-xl transition-colors ${isActive('/student/my-courses') ? 'text-primary font-variation-settings-fill' : 'text-gray-500 group-hover:text-primary'}`} style={isActive('/student/my-courses') ? { fontVariationSettings: "'FILL' 1" } : {}}>library_books</span>
-                            My Courses
+                            My Class
                         </Link>
                         <Link to="/student/assignments" className={`sidebar-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all group ${isActive('/student/assignments') ? 'bg-primary-light text-primary border-r-[3px] border-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}>
                             <span className={`material-symbols-outlined text-xl transition-colors ${isActive('/student/assignments') ? 'text-primary font-variation-settings-fill' : 'text-gray-500 group-hover:text-primary'}`} style={isActive('/student/assignments') ? { fontVariationSettings: "'FILL' 1" } : {}}>assignment</span>

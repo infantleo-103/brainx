@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, getMyEnrollments } from '../../services/api';
+import { getCurrentUser, getMyEnrollments, getUserProfile } from '../../services/api';
 
 export default function StudentMyCourses() {
     const navigate = useNavigate();
@@ -11,23 +11,27 @@ export default function StudentMyCourses() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [userData, enrollmentsData] = await Promise.all([
-                    getCurrentUser(),
-                    getMyEnrollments()
-                ]);
+                // 1. Get Current User First
+                const userData = await getCurrentUser();
                 setUser(userData);
 
-                // Transform API data to match UI component structure
+                // 2. Fetch Profile & Enrollments in Parallel
+                const [profileData, enrollmentsData] = await Promise.all([
+                    getUserProfile(userData.id),
+                    getMyEnrollments()
+                ]);
+
+                // 3. Process Enrollments (as before)
                 const formattedEnrollments = enrollmentsData.map(enrollment => {
                     const course = enrollment.course || {};
                     return {
                         id: course.id,
                         title: course.title,
-                        thumbnail: course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Fallback image
+                        thumbnail: course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
                         badge: {
                             text: course.badge?.text || "Course",
                             icon: course.badge?.icon || "school",
-                            color: course.badge?.className || "bg-primary/90" // Using className as color for now or default
+                            color: course.badge?.className || "bg-primary/90"
                         },
                         tags: course.category ? [course.category.name] : [],
                         logo: {
@@ -37,14 +41,45 @@ export default function StudentMyCourses() {
                             icon: "school"
                         },
                         institution: course.provider?.name || "BrainX Academy",
-                        instructor: "BrainX Instructor", // Backend doesn't return instructor name on enrollment yet, need to fetch or add to schema
+                        instructor: "BrainX Instructor",
                         status: enrollment.status,
-                        progress: enrollment.status === 'completed' ? 100 : (enrollment.status === 'active' ? 35 : 0), // Mock progress based on status
+                        progress: enrollment.status === 'completed' ? 100 : (enrollment.status === 'active' ? 35 : 0),
                         barColor: enrollment.status === 'completed' ? 'bg-green-500' : 'bg-primary'
                     };
                 });
 
-                setEnrollments(formattedEnrollments);
+                // 4. Process Batches from Profile
+                // The profile API returns batches in data.role_data.batches
+                const batches = profileData.role_data?.batches || [];
+                const formattedBatches = batches.map(batch => ({
+                    id: batch.id,
+                    title: batch.course_title || batch.batch_name, // Use course title if available, else batch name
+                    thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Placeholder
+                    badge: {
+                        text: "Batch",
+                        icon: "group",
+                        color: "bg-purple-600/90"
+                    },
+                    tags: ["Live Class"],
+                    logo: {
+                        bg: "bg-purple-50",
+                        border: "border-purple-100",
+                        text: "text-purple-600",
+                        icon: "group"
+                    },
+                    institution: "BrainX Academy",
+                    instructor: batch.teacher_name || "Assigned Teacher",
+                    status: "active", // Batches in profile are usually active
+                    progress: 10, // Placeholder progress for batches
+                    barColor: "bg-purple-600",
+                    isBatch: true // Flag to distinguish if needed
+                }));
+
+                // 5. Merge Data - Prefer batches if available, or just combined list
+                // Filtering out duplicates if a user is both enrolled and in a batch for the same course might be needed, 
+                // but for now, let's show all.
+                setEnrollments([...formattedEnrollments, ...formattedBatches]);
+
             } catch (error) {
                 console.error("Failed to fetch data", error);
             } finally {
@@ -61,7 +96,7 @@ export default function StudentMyCourses() {
     return (
         <div className="flex flex-col h-full overflow-hidden relative">
             <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-20">
-                <h1 className="text-xl font-bold text-gray-900">My Courses</h1>
+                <h1 className="text-xl font-bold text-gray-900">My Class</h1>
                 <div className="flex items-center gap-6">
                     <div className="relative hidden md:block group">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-xl group-focus-within:text-primary transition-colors">search</span>

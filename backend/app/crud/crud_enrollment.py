@@ -19,6 +19,11 @@ class CRUDEnrollment:
         """Check if student is enrolled in a course"""
         result = await db.execute(
             select(Enrollment)
+            .options(
+                selectinload(Enrollment.course).selectinload(Course.badge),
+                selectinload(Enrollment.course).selectinload(Course.provider),
+                selectinload(Enrollment.course).selectinload(Course.category)
+            )
             .filter(
                 Enrollment.student_id == student_id,
                 Enrollment.course_id == course_id,
@@ -58,13 +63,13 @@ class CRUDEnrollment:
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, *, obj_in: EnrollmentCreate, student_id: UUID) -> Enrollment:
-        """Create new enrollment"""
+        """Create new enrollment with 'requested' status (pending admin approval)"""
         db_obj = Enrollment(
             student_id=student_id,
             course_id=obj_in.course_id,
             teacher_id=obj_in.teacher_id,
             preferred_time=obj_in.preferred_time,
-            status=EnrollmentStatus.active
+            status=EnrollmentStatus.requested  # Pending admin approval
         )
         db.add(db_obj)
         await db.commit()
@@ -89,6 +94,21 @@ class CRUDEnrollment:
         self, db: AsyncSession, *, skip: int = 0, limit: int = 100
     ) -> List[Enrollment]:
         result = await db.execute(select(Enrollment).offset(skip).limit(limit))
+        return result.scalars().all()
+    
+    async def get_by_user(self, db: AsyncSession, *, user_id: UUID, skip: int = 0, limit: int = 100) -> List[Enrollment]:
+        """Get all enrollments for a specific user with course details"""
+        result = await db.execute(
+            select(Enrollment)
+             .options(
+                selectinload(Enrollment.course).selectinload(Course.badge),
+                selectinload(Enrollment.course).selectinload(Course.provider),
+                selectinload(Enrollment.course).selectinload(Course.category)
+            )
+            .filter(Enrollment.student_id == user_id)
+            .offset(skip)
+            .limit(limit)
+        )
         return result.scalars().all()
 
 enrollment = CRUDEnrollment()

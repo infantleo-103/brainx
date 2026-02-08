@@ -92,9 +92,9 @@ export default function CreateCourse() {
                 duration_weeks: parseInt(formData.duration_weeks) || 0,
                 status: formData.status,
                 image: formData.image,
-                category_id: parseInt(formData.category_id) || 0,
-                provider_id: formData.provider_id ? parseInt(formData.provider_id) : null,
-                badge_id: formData.badge_id ? parseInt(formData.badge_id) : null,
+                category_id: formData.category_id || null,
+                provider_id: formData.provider_id || null,
+                badge_id: formData.badge_id || null,
             };
 
             await createCourse(payload);
@@ -155,7 +155,7 @@ export default function CreateCourse() {
     };
 
     const getCategoryName = (id) => {
-        const cat = categories.find(c => c.id === parseInt(id));
+        const cat = categories.find(c => c.id === id);
         return cat ? cat.name : 'Unknown';
     };
 

@@ -1,4 +1,5 @@
 from typing import Any, List
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
@@ -43,7 +44,7 @@ async def create_course_category(
 async def update_course_category(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    category_id: int,
+    category_id: UUID,
     category_in: CourseCategoryUpdate,
     # current_user: User = Depends(deps.get_current_user),
 ) -> Any:
@@ -60,7 +61,7 @@ async def update_course_category(
 async def delete_course_category(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    category_id: int,
+    category_id: UUID,
     # current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
@@ -104,7 +105,7 @@ async def create_course(
 async def read_courses_by_badge(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    badge_id: int,
+    badge_id: UUID,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -114,11 +115,25 @@ async def read_courses_by_badge(
     courses = await crud_course.get_by_badge(db, badge_id=badge_id, skip=skip, limit=limit)
     return courses
 
+@router.get("/category/{category_id}", response_model=List[Course])
+async def read_courses_by_category(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    category_id: UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Retrieve courses by category ID.
+    """
+    courses = await crud_course.get_by_category(db, category_id=category_id, skip=skip, limit=limit)
+    return courses
+
 @router.get("/{course_id}", response_model=Course)
 async def read_course(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    course_id: int,
+    course_id: UUID,
 ) -> Any:
     """
     Get course by ID.
@@ -132,7 +147,7 @@ async def read_course(
 async def update_course(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    course_id: int,
+    course_id: UUID,
     course_in: CourseUpdate,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
@@ -149,7 +164,7 @@ async def update_course(
 async def delete_course(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    course_id: int,
+    course_id: UUID,
     # current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """

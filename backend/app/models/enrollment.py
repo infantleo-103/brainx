@@ -7,7 +7,8 @@ import enum
 from app.db.base import Base
 
 class EnrollmentStatus(str, enum.Enum):
-    active = "active"
+    requested = "requested"  # Initial status - pending admin approval
+    active = "active"        # Approved by admin
     completed = "completed"
     paused = "paused"
 

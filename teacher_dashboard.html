@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Teacher Directory &amp; Management</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5023c4",
+                        "primary-light": "#f6f4ff",
+                        "surface": "#ffffff",
+                        "background": "#fbfaff",
+                        "border-subtle": "#eeebf7",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "card": "16px",
+                        "btn": "12px",
+                    },
+                    boxShadow: {
+                        'soft-purple': '0 10px 30px -5px rgba(80, 35, 196, 0.08)',
+                        'inner-subtle': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-background text-[#1a1625] antialiased;
+            }
+        }
+        .sidebar-active {
+            @apply bg-primary text-white shadow-lg shadow-primary/20;
+        }
+        .status-pill-active {
+            @apply bg-emerald-50 text-emerald-700 border border-emerald-100;
+        }
+        .status-pill-leave {
+            @apply bg-amber-50 text-amber-700 border border-amber-100;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<aside class="w-72 bg-white border-r border-border-subtle flex flex-col fixed h-full z-50">
+<div class="p-8 flex items-center gap-3">
+<div class="size-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined text-white text-2xl">school</span>
+</div>
+<span class="font-bold text-xl tracking-tight">EduMaster</span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-card text-gray-500 hover:bg-primary-light hover:text-primary transition-all group" href="#">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<span class="font-semibold text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-card sidebar-active transition-all group" href="#">
+<span class="material-symbols-outlined text-2xl">group</span>
+<span class="font-semibold text-sm">Teacher Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-card text-gray-500 hover:bg-primary-light hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl">auto_stories</span>
+<span class="font-semibold text-sm">Course Catalog</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-card text-gray-500 hover:bg-primary-light hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+<span class="font-semibold text-sm">Main Schedule</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-card text-gray-500 hover:bg-primary-light hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl">analytics</span>
+<span class="font-semibold text-sm">Performance</span>
+</a>
+</nav>
+<div class="p-6 border-t border-border-subtle">
+<div class="bg-primary-light p-4 rounded-card flex items-center gap-3">
+<div class="size-10 rounded-full bg-white overflow-hidden shadow-sm">
+<img alt="Admin" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4fDcbhWx-lLos0p_ze11NuCNLd3cCmhqk2UoLQiabRUW4ZQTeGsoyHEhERIgZqnHQaegP1yEg6HzZg8N7-Sd5DtMiSu3zWIcU5gUedSfNbTlAyEABWR25-sHC0S53Sou0wGgBJbmnkqFg75hh3hA29daGraSSc60tM3F4cI9K36wXHPbXs1nfmTusXrnx6XfDlP5YM3wvIfXKOtbdAgxFRa-ZqmXp0YkpDrkl5Hj0-IzH7k1sDwPb-zSvwcdtjnmmKv8xoeiTXrk"/>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-primary">Alex Sterling</p>
+<p class="text-[10px] text-primary/70 uppercase font-bold tracking-widest">System Admin</p>
+</div>
+<span class="material-symbols-outlined text-primary text-xl cursor-pointer">logout</span>
+</div>
+</div>
+</aside>
+<main class="flex-1 ml-72">
+<header class="h-24 bg-white/80 backdrop-blur-md sticky top-0 border-b border-border-subtle px-10 flex items-center justify-between z-40">
+<h1 class="text-2xl font-bold text-[#1a1625]">Teacher Management</h1>
+<div class="flex items-center gap-6">
+<div class="relative w-96 group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-12 pr-4 h-11 bg-gray-50 border-gray-100 rounded-full text-sm focus:ring-primary focus:border-primary transition-all" placeholder="Search by name, ID or department..." type="text"/>
+</div>
+<button class="flex items-center gap-2 bg-primary text-white h-11 px-6 rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:bg-[#3e1a96] transition-all">
+<span class="material-symbols-outlined text-xl">add</span>
+                    Add New Teacher
+                </button>
+</div>
+</header>
+<div class="p-10">
+<div class="grid grid-cols-3 gap-8 mb-10">
+<div class="bg-white p-6 rounded-card shadow-soft-purple border border-white flex items-center gap-5">
+<div class="size-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">diversity_3</span>
+</div>
+<div>
+<p class="text-gray-500 text-sm font-medium">Total Faculty</p>
+<h4 class="text-2xl font-extrabold">124</h4>
+</div>
+</div>
+<div class="bg-white p-6 rounded-card shadow-soft-purple border border-white flex items-center gap-5">
+<div class="size-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-3xl">verified_user</span>
+</div>
+<div>
+<p class="text-gray-500 text-sm font-medium">Active Instructors</p>
+<h4 class="text-2xl font-extrabold">112</h4>
+</div>
+</div>
+<div class="bg-white p-6 rounded-card shadow-soft-purple border border-white flex items-center gap-5">
+<div class="size-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-3xl">history_toggle_off</span>
+</div>
+<div>
+<p class="text-gray-500 text-sm font-medium">Teaching Hours this Month</p>
+<h4 class="text-2xl font-extrabold">2,840</h4>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-card shadow-soft-purple border border-white overflow-hidden">
+<div class="p-6 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-bold text-lg">Staff Directory</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-gray-50/50 text-[11px] uppercase tracking-widest text-gray-400 font-bold">
+<th class="px-8 py-4">Instructor</th>
+<th class="px-6 py-4">Teacher ID</th>
+<th class="px-6 py-4">Primary Department</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Classes</th>
+<th class="px-8 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr class="hover:bg-primary-light/30 transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-11 rounded-xl overflow-hidden bg-gray-100 shadow-sm">
+<img alt="Dr. Sarah Jenkins" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAm4CMB9p_vM-2WRCkGAFih7mJxIS5wsSQR4yXoWP7aczzyy31vvd6n5d7GVz1hr1p6VCxA7xdKd6BvhzaQ4gZX-b0-vfz1a5twEECOxh4jaXxrPcr0B_D89Cx2KEb0bi5rVyDTQVYH3bGJWEbAlCpGqDDB0cmtLjENjxRE-d2FDhS_HiYdNlYI_kNXcLyPlfeOe4VrKQuYO0ph-7Q2Z47vlTWabG4E2oX5wLkt7-G_uLhjL5Axn3AIwPnwo6iEM40hVo_ZkyoPoY"/>
+</div>
+<div>
+<p class="font-bold text-sm text-[#1a1625]">Dr. Sarah Jenkins</p>
+<p class="text-xs text-gray-400">s.jenkins@academy.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-mono text-xs font-semibold text-gray-500 px-2 py-1 bg-gray-100 rounded">TCH-8821</span>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-gray-600">Computer Science</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 text-[11px] font-bold rounded-full status-pill-active uppercase">Active</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">school</span>
+<span class="text-sm font-bold">04</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-xs font-bold text-primary hover:underline px-2 py-1">Assign Class</button>
+<button class="text-xs font-bold text-gray-600 hover:text-primary transition-colors border border-gray-200 hover:border-primary/30 px-3 py-1.5 rounded-lg bg-white">View Profile</button>
+<button class="p-1.5 text-gray-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">calendar_today</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary-light/30 transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-11 rounded-xl overflow-hidden bg-gray-100 shadow-sm">
+<img alt="Prof. Michael Chen" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw5ouygVjHBJAMbKvNO82eO9Vnbh2mGNzFV_JUw1R_acPWoC4N2DH4iqDHJREoE9GGnAYIzYnrTrORp4erZIgVMQBKqxBoEdvtYMSfdi76IUp5S8B6NL2K_hNSxPt078Vd4Oq6cAVQcpIh1DNIvlZmxy97FrALUMSc69ES0KhtBBsHOfFKWOIcD7njHUMuZDi85XyAjv8DskrcQ1-JNMWeJwyoH1ntA3ZLCBzkeQGsaCeiO5bVvSZXBme49GFkgx58tl-ceG3cwQk"/>
+</div>
+<div>
+<p class="font-bold text-sm text-[#1a1625]">Prof. Michael Chen</p>
+<p class="text-xs text-gray-400">m.chen@academy.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-mono text-xs font-semibold text-gray-500 px-2 py-1 bg-gray-100 rounded">TCH-2245</span>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-gray-600">Applied Mathematics</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 text-[11px] font-bold rounded-full status-pill-leave uppercase">On Leave</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">school</span>
+<span class="text-sm font-bold">02</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-xs font-bold text-primary hover:underline px-2 py-1">Assign Class</button>
+<button class="text-xs font-bold text-gray-600 hover:text-primary transition-colors border border-gray-200 hover:border-primary/30 px-3 py-1.5 rounded-lg bg-white">View Profile</button>
+<button class="p-1.5 text-gray-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">calendar_today</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary-light/30 transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-11 rounded-xl overflow-hidden bg-gray-100 shadow-sm">
+<img alt="Dr. Eleanor Vance" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5jeA5kJD9PH6vFYDZuQ-cOvWsQemoyH7k-g3YOC94qKRFQFKjJsUoFzogEb9UTD5_aei3Om-iHjLjSzNiqr3AMR0TETUBQ_U2pzzSXVDnfN_nQU89Utk-_glTsBQqxHk0OpRClGikV__gA8iYEBHzHgrsvtISKbcqeUEm8mzZk8U3TsKqxQBT1YU-Yr9O-S2iHtosKagFAaLBsfheOF6rmXsFjq49tv_IC-DWTyF2bRbmPgR5EGTNipuCObOIDAtGbbWa8MOuk_w"/>
+</div>
+<div>
+<p class="font-bold text-sm text-[#1a1625]">Dr. Eleanor Vance</p>
+<p class="text-xs text-gray-400">e.vance@academy.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-mono text-xs font-semibold text-gray-500 px-2 py-1 bg-gray-100 rounded">TCH-9012</span>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-gray-600">Humanities &amp; Arts</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 text-[11px] font-bold rounded-full status-pill-active uppercase">Active</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">school</span>
+<span class="text-sm font-bold">05</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-xs font-bold text-primary hover:underline px-2 py-1">Assign Class</button>
+<button class="text-xs font-bold text-gray-600 hover:text-primary transition-colors border border-gray-200 hover:border-primary/30 px-3 py-1.5 rounded-lg bg-white">View Profile</button>
+<button class="p-1.5 text-gray-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">calendar_today</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 border-t border-border-subtle flex items-center justify-between">
+<p class="text-sm text-gray-500">Showing <span class="font-bold">1-3</span> of <span class="font-bold">124</span> teachers</p>
+<div class="flex gap-2">
+<button class="size-9 rounded-lg border border-border-subtle flex items-center justify-center hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-xl">chevron_left</span>
+</button>
+<button class="size-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-sm">1</button>
+<button class="size-9 rounded-lg border border-border-subtle flex items-center justify-center hover:bg-gray-50 transition-colors font-bold text-sm">2</button>
+<button class="size-9 rounded-lg border border-border-subtle flex items-center justify-center hover:bg-gray-50 transition-colors font-bold text-sm">3</button>
+<button class="size-9 rounded-lg border border-border-subtle flex items-center justify-center hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-xl">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

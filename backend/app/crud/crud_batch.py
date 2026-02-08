@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -6,11 +7,11 @@ from app.models.batch import Batch, BatchMember, BatchMemberRole, BatchMemberSta
 from app.schemas.batch import BatchCreate, BatchUpdate, BatchMemberCreate, BatchMemberUpdate
 
 class CRUDBatch:
-    async def get(self, db: AsyncSession, id: int) -> Optional[Batch]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[Batch]:
         result = await db.execute(select(Batch).filter(Batch.id == id))
         return result.scalars().first()
 
-    async def get_with_members(self, db: AsyncSession, id: int) -> Optional[Batch]:
+    async def get_with_members(self, db: AsyncSession, id: UUID) -> Optional[Batch]:
         result = await db.execute(
             select(Batch)
             .options(
@@ -22,7 +23,16 @@ class CRUDBatch:
         return result.scalars().first()
 
     async def get_multi(self, db: AsyncSession, *, skip: int = 0, limit: int = 100) -> List[Batch]:
-        result = await db.execute(select(Batch).offset(skip).limit(limit))
+        result = await db.execute(
+            select(Batch)
+            .options(
+                selectinload(Batch.course),
+                selectinload(Batch.teacher),
+                selectinload(Batch.members).selectinload(BatchMember.user)
+            )
+            .offset(skip)
+            .limit(limit)
+        )
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, *, obj_in: BatchCreate) -> Batch:
@@ -122,18 +132,18 @@ class CRUDBatch:
         await db.refresh(db_obj)
         return db_obj
 
-    async def remove(self, db: AsyncSession, *, id: int) -> Batch:
+    async def remove(self, db: AsyncSession, *, id: UUID) -> Batch:
         result = await db.execute(select(Batch).filter(Batch.id == id))
         obj = result.scalars().first()
         await db.delete(obj)
         await db.commit()
         return obj
 
-    async def get_by_course(self, db: AsyncSession, *, course_id: int, skip: int = 0, limit: int = 100) -> List[Batch]:
+    async def get_by_course(self, db: AsyncSession, *, course_id: UUID, skip: int = 0, limit: int = 100) -> List[Batch]:
         result = await db.execute(select(Batch).filter(Batch.course_id == course_id).offset(skip).limit(limit))
         return result.scalars().all()
     
-    async def get_active_batch_by_course(self, db: AsyncSession, *, course_id: int) -> Optional[Batch]:
+    async def get_active_batch_by_course(self, db: AsyncSession, *, course_id: UUID) -> Optional[Batch]:
         """Find an active batch for a course"""
         result = await db.execute(
             select(Batch)
@@ -141,9 +151,40 @@ class CRUDBatch:
             .order_by(Batch.created_at.desc())
         )
         return result.scalars().first()
+    
+    async def get_by_teacher(self, db: AsyncSession, *, teacher_id: UUID, skip: int = 0, limit: int = 100) -> List[Batch]:
+        """Get all batches for a specific teacher with full relationship data"""
+        result = await db.execute(
+            select(Batch)
+            .options(
+                selectinload(Batch.course),
+                selectinload(Batch.teacher),
+                selectinload(Batch.members).selectinload(BatchMember.user)
+            )
+            .filter(Batch.teacher_id == teacher_id)
+            .offset(skip)
+            .limit(limit)
+        )
+        return result.scalars().all()
+    
+    async def get_by_student(self, db: AsyncSession, *, user_id: UUID, skip: int = 0, limit: int = 100) -> List[Batch]:
+        """Get all batches where a user is a member (student)"""
+        result = await db.execute(
+            select(Batch)
+            .join(BatchMember, Batch.id == BatchMember.batch_id)
+            .options(
+                selectinload(Batch.course),
+                selectinload(Batch.teacher),
+                selectinload(Batch.members).selectinload(BatchMember.user)
+            )
+            .filter(BatchMember.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+        )
+        return result.scalars().all()
 
 class CRUDBatchMember:
-    async def get(self, db: AsyncSession, id: int) -> Optional[BatchMember]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[BatchMember]:
         result = await db.execute(select(BatchMember).filter(BatchMember.id == id))
         return result.scalars().first()
 
@@ -160,11 +201,11 @@ class CRUDBatchMember:
         await db.refresh(db_obj)
         return db_obj
     
-    async def get_by_batch(self, db: AsyncSession, *, batch_id: int, skip: int = 0, limit: int = 100) -> List[BatchMember]:
+    async def get_by_batch(self, db: AsyncSession, *, batch_id: UUID, skip: int = 0, limit: int = 100) -> List[BatchMember]:
         result = await db.execute(select(BatchMember).filter(BatchMember.batch_id == batch_id).offset(skip).limit(limit))
         return result.scalars().all()
     
-    async def get_by_user_and_course(self, db: AsyncSession, *, user_id, course_id: int) -> Optional[BatchMember]:
+    async def get_by_user_and_course(self, db: AsyncSession, *, user_id: UUID, course_id: UUID) -> Optional[BatchMember]:
         """Check if user is enrolled in a course"""
         from app.models.batch import Batch
         result = await db.execute(

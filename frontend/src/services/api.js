@@ -210,6 +210,10 @@ export const getCourse = async (id, token = null) => {
     return fetchWithAuth(`/courses/${id}`, {}, token);
 };
 
+export const getCoursesByCategory = async (categoryId, skip = 0, limit = 100, token = null) => {
+    return fetchWithAuth(`/courses/category/${categoryId}?skip=${skip}&limit=${limit}`, {}, token);
+};
+
 export const getUsers = async (skip = 0, limit = 100, token = null) => {
     const response = await fetchWithAuth(`/users/?skip=${skip}&limit=${limit}`, {}, token);
     return response.data;
@@ -228,9 +232,16 @@ export const updateUser = async (id, userData, token = null) => {
     return response.data;
 };
 
-export const deleteUser = async (id, token = null) => {
-    const response = await fetchWithAuth(`/users/${id}`, {
-        method: 'DELETE',
+export const deleteUser = async (userId, token = null) => {
+    const response = await fetchWithAuth(`/users/${userId}`, {
+        method: 'DELETE'
+    }, token);
+    return response.data;
+};
+
+export const getUserProfile = async (userId, token = null) => {
+    const response = await fetchWithAuth(`/users/${userId}/profile`, {
+        method: 'GET'
     }, token);
     return response.data;
 };
@@ -272,6 +283,16 @@ export const deleteBatch = async (id, token = null) => {
 
 export const getBatchMembers = async (batchId, skip = 0, limit = 100, token = null) => {
     return fetchWithAuth(`/classes/${batchId}/members/?skip=${skip}&limit=${limit}`, {}, token);
+};
+
+export const addBatchMember = async (batchId, memberData, token = null) => {
+    return fetchWithAuth(`/classes/${batchId}/members/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memberData),
+    }, token);
 };
 
 
@@ -347,30 +368,24 @@ export const getTeacherCourses = async (teacherId, skip = 0, limit = 100, token 
     return fetchWithAuth(`/teacher-courses/teacher/${teacherId}?skip=${skip}&limit=${limit}`, {}, token);
 };
 
-// Teacher Time Slots API
-export const createBulkTimeSlots = async (slotData, token = null) => {
-    return fetchWithAuth('/teacher-slots/bulk', {
-        method: 'POST',
+
+// Teacher Availability API
+export const getTeacherAvailability = async (teacherId, token = null) => {
+    return fetchWithAuth(`/teacher-slots/${teacherId}`, {}, token);
+};
+
+export const updateTeacherAvailability = async (teacherId, availabilityData, token = null) => {
+    return fetchWithAuth(`/teacher-slots/${teacherId}`, {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(slotData),
+        body: JSON.stringify(availabilityData),
     }, token);
 };
 
 export const getTeachersByCourse = async (courseId, token = null) => {
     return fetchWithAuth(`/teacher-courses/course/${courseId}`, {}, token);
-};
-
-export const getTeacherTimeSlots = async (teacherId, token = null) => {
-    let url = `/teacher-slots/?teacher_id=${teacherId}`;
-    return fetchWithAuth(url, {}, token);
-};
-
-export const deleteTimeSlot = async (slotId, token = null) => {
-    return fetchWithAuth(`/teacher-slots/${slotId}`, {
-        method: 'DELETE',
-    }, token);
 };
 
 // Enrollment API
@@ -412,6 +427,27 @@ export const createClassSession = async (sessionData, token = null) => {
         },
         body: JSON.stringify(sessionData),
     }, token);
+};
+
+// Parent-Student API
+export const linkParentStudent = async (parentId, studentId, token = null) => {
+    return fetchWithAuth('/parent-student/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ parent_id: parentId, student_id: studentId }),
+    }, token);
+};
+
+export const unlinkParentStudent = async (parentId, studentId, token = null) => {
+    return fetchWithAuth(`/parent-student/?parent_id=${parentId}&student_id=${studentId}`, {
+        method: 'DELETE',
+    }, token);
+};
+
+export const getStudentsByParent = async (parentId, token = null) => {
+    return fetchWithAuth(`/parent-student/students/${parentId}`, {}, token);
 };
 
 const api = {
